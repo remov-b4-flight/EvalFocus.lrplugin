@@ -9,14 +9,11 @@ local LrApplication = import 'LrApplication'
 local LrLogger = import 'LrLogger'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
---local LrDate = import 'LrDate'
 local EVLogger = LrLogger (PluginTitle)
---local LrShell = import 'LrShell'
---local LrDialogs = import 'LrDialogs'
---local LrFileUtils = import 'LrFileUtils'
 
 EVLogger:enable('logfile')
 local info = EVLogger:quickf('info')
+info(PluginTtile ..' start')
 
 local CurrentCatalog = LrApplication.activeCatalog()
 local evalfocus = '/opt/local/bin/evalfocus'

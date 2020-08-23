@@ -136,12 +136,12 @@ if len(faces):
             max_facelap = 0
 
         #Report Visualization
-        cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        cv2.putText(image, "{}: {:.2f}".format("Face", face_laplacians[index].var()), (x, y),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
-        cv2.putText(image, "{}: {:.2f}".format("Image",laplacian.var()), (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
-        write_image(image_path, image)
+        #cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        #cv2.putText(image, "{}: {:.2f}".format("Face", face_laplacians[index].var()), (x, y),
+        #                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
+        #cv2.putText(image, "{}: {:.2f}".format("Image",laplacian.var()), (10, 30),
+        #    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
+        #write_image(image_path, image)
     #End of face loop
     if (max_facelap > 0):
         result = int(max_facelap)

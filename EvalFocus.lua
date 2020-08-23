@@ -9,16 +9,23 @@ local LrApplication = import 'LrApplication'
 local LrLogger = import 'LrLogger'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
-local EVLogger = LrLogger (PluginTitle)
+local Logger = LrLogger (PluginTitle)
 
-EVLogger:enable('logfile')
-local info = EVLogger:quickf('info')
-info(PluginTtile ..' start')
+Logger:enable('logfile')
+local info = Logger:quickf('info')
 
 local CurrentCatalog = LrApplication.activeCatalog()
-local evalfocus = '/opt/local/bin/evalfocus'
-local logfile = '/Users/jenoki/Documents/evalcmd.log'
-local log_option = ' -l  ' .. logfile .. ' '
+local shell = 'c:\\windows\\system32\\wsl.exe -e '
+local python = 'python3 '
+local script = '/evalfocus.py '
+local wsl_pfx = '/mnt/'
+
+function get_wslpath(winpath)
+	local wkpath = (winpath:gsub('\\','/')):sub(3)
+	local drive = (winpath:sub(1,1)):lower()
+	local p = wsl_pfx .. drive .. wkpath
+	return p
+end
 
 --Main part of this plugin.
 LrTasks.startAsyncTask( function ()
@@ -32,14 +39,15 @@ LrTasks.startAsyncTask( function ()
 	--loops photos in selected
 	info('-loop-')
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus',function()
+		local script_path = get_wslpath(_PLUGIN.path) .. script
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 			info("Identifier=%d",PhotoIt.localIdentifier)
 
-			local FilePath = PhotoIt:getRawMetadata('path')
-			local Argument = log_option
-			local CommandLine = evalfocus .. Argument .. "-f '" .. FilePath .."' "
+			local winpath = PhotoIt:getRawMetadata('path')
+			local FilePath = get_wslpath(winpath)
+			local CommandLine = shell .. python .. script_path .. FilePath
 			info(CommandLine)
-			local Accuracy = LrTasks.execute(CommandLine) / 256
+			local Accuracy = LrTasks.execute(CommandLine)
 			info ('Accuracy=' .. Accuracy)
 			PhotoIt:setPropertyForPlugin(_PLUGIN,'accuracy',Accuracy)
 			ProgressBar:setPortionComplete(i,countPhotos)

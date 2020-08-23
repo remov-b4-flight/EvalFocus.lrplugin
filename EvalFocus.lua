@@ -17,8 +17,9 @@ local info = Logger:quickf('info')
 local CurrentCatalog = LrApplication.activeCatalog()
 local shell = 'c:\\windows\\system32\\wsl.exe -e '
 local python = 'python3 '
-local script = '/evalfocus.py '
+local script = '/evalfocus.py -v '
 local wsl_pfx = '/mnt/'
+local redir_file = ' >'.. _PLUGIN.path .. '/evalfocus.log'
 
 function get_wslpath(winpath)
 	local wkpath = (winpath:gsub('\\','/')):sub(3)
@@ -41,7 +42,7 @@ LrTasks.startAsyncTask( function ()
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus',function()
 		local script_path = get_wslpath(_PLUGIN.path) .. script
 		for i,PhotoIt in ipairs(SelectedPhotos) do
-			info("Identifier=%d",PhotoIt.localIdentifier)
+			--info("Identifier=%d",PhotoIt.localIdentifier)
 
 			local winpath = PhotoIt:getRawMetadata('path')
 			local FilePath = get_wslpath(winpath)
@@ -49,7 +50,7 @@ LrTasks.startAsyncTask( function ()
 			info(CommandLine)
 			local Accuracy = LrTasks.execute(CommandLine)
 			info ('Accuracy=' .. Accuracy)
-			PhotoIt:setPropertyForPlugin(_PLUGIN,'accuracy',Accuracy)
+			--PhotoIt:setPropertyForPlugin(_PLUGIN,'accuracy',Accuracy)
 			ProgressBar:setPortionComplete(i,countPhotos)
 		end --end of for photos loop
 	end ) --end of withWriteAccessDo

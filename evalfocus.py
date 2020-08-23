@@ -50,7 +50,7 @@ cascade_file_front = os.path.join(cascade_path, args["cascade"])
 cascade_file_prof = os.path.join(cascade_path, args["profile"])
 cascade_file_eye = os.path.join(cascade_path, args["eye"])
 
-if (args["v"] > 0):
+if (args["v"] > 1):
     print("cascade front=", cascade_file_front)
     print("cascade profile=", cascade_file_prof)
     print("cascade eye=", cascade_file_eye)
@@ -89,6 +89,9 @@ scaleFactor = args["scale"],
 minNeighbors = args["neighbor"], 
 minSize = (minsize, minsize),
 maxSize = (maxsize, maxsize) )
+if len(faces):
+    print("frontal faces= ", faces)
+
 #Detect profile face
 profile_cascade = cv2.CascadeClassifier(cascade_file_prof)
 profile_faces = profile_cascade.detectMultiScale( gray, 
@@ -96,10 +99,14 @@ scaleFactor = args["scale"],
 minNeighbors = args["neighbor"], 
 minSize = (minsize, minsize),
 maxSize = (maxsize, maxsize) )
-#Joint
 if len(profile_faces):
-    print("profile faces=", len(profile_faces))
-    np.concatenate(faces, profile_faces)
+    print("profile faces =", profile_faces)
+
+#Joint front & profile
+if len(profile_faces):
+    faces = np.concatenate([faces, profile_faces])
+if (args["v"] > 0):
+    print("faces =", faces)
 
 face_laplacians = None
 if len(faces):
@@ -112,7 +119,7 @@ print( '%d %3.2f %d %d' % (0, laplacian.var(), gray.shape[0], gray.shape[1]) )
 
 #Any faces is there
 if len(faces):
-    print("frontal faces=", len(faces))
+    print("faces=", len(faces))
     eye_cascade = cv2.CascadeClassifier(cascade_file_eye)
     max_facelap = 0
     #Face loop

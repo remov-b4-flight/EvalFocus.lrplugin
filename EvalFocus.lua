@@ -50,7 +50,7 @@ LrTasks.startAsyncTask( function ()
 			info(CommandLine)
 			local Accuracy = LrTasks.execute(CommandLine)
 			info ('Accuracy=' .. Accuracy)
-			--PhotoIt:setPropertyForPlugin(_PLUGIN,'accuracy',Accuracy)
+			PhotoIt:setPropertyForPlugin(_PLUGIN,'accuracy',Accuracy)
 			ProgressBar:setPortionComplete(i,countPhotos)
 		end --end of for photos loop
 	end ) --end of withWriteAccessDo

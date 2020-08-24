@@ -8,5 +8,5 @@ return {
 	metadataFieldsForPhotos = {
 		{id = 'accuracy', title = 'Accuracy', datatype = 'string', browsable = true, searchable = true }
 	},
-	schemaVersion = 1,
+	schemaVersion = 2,
 }

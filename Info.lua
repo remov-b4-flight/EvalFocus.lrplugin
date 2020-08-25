@@ -1,7 +1,7 @@
 --[[
 Info.lua
 EvalFocus.lrplugin
-Author:@jenoki48
+Author:@remov_b4_flight
 ]]
 
 return {

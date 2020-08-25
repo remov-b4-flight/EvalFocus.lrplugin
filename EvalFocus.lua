@@ -1,7 +1,7 @@
 --[[
 EvalFocus.lua
 EvalFocus.lrplugin
-Author:@jenoki48
+Author:@remov_b4_flight
 ]]
 
 local PluginTitle = 'EvalFocus'
@@ -42,8 +42,6 @@ LrTasks.startAsyncTask( function ()
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus',function()
 		local script_path = get_wslpath(_PLUGIN.path) .. script
 		for i,PhotoIt in ipairs(SelectedPhotos) do
-			--info("Identifier=%d",PhotoIt.localIdentifier)
-
 			local winpath = PhotoIt:getRawMetadata('path')
 			local FilePath = get_wslpath(winpath)
 			local CommandLine = shell .. python .. script_path .. FilePath

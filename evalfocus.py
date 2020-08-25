@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+#Evaluate focus by OpenCV
+#Author: @remov_b4_flight
 import argparse
 import cv2
 import os
@@ -35,13 +38,13 @@ def resize_image_to_harf(image):
     return cv2.resize(image,None,fx=0.5, fy=0.5)
 
 #Option parse
-ap = argparse.ArgumentParser()
-ap.add_argument("file")
+ap = argparse.ArgumentParser(description = "Evaluate image focus.")
+ap.add_argument("file", help = "Image file to process.")
 ap.add_argument("-v", help = "verbose outputs", action='count', default = 0)
 ap.add_argument("-c", "--cascade", help = "cascade file", default = "haarcascade_frontalface_default.xml")
 ap.add_argument("-p", "--profile", help = "profile file", default = "haarcascade_profileface.xml")
 ap.add_argument("-e", "--eye", help = "eye cascade file", default = "haarcascade_eye.xml")
-ap.add_argument("-s", "--scale", help = "scale factor", type = float, default = 1.1)
+ap.add_argument("-s", "--scale", help = "scale factor", type = float, default = 1.08)
 ap.add_argument("-n", "--neighbor", help = "minNeighbor param", type = int, default = 3)
 args=vars(ap.parse_args())
 
@@ -140,7 +143,7 @@ if len(faces):
         if len(eyes):
             print("eyes =", len(eyes))
         else:
-            max_facelap = 0
+            max_facelap = 0 #determine this area has no face.
 
         #Report Visualization
         #cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)

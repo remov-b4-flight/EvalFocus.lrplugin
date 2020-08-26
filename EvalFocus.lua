@@ -19,7 +19,7 @@ local shell = 'c:\\windows\\system32\\wsl.exe -e '
 local python = 'python3 '
 local script = '/evalfocus.py -v '
 local wsl_pfx = '/mnt/'
-local redir_file = ' >'.. _PLUGIN.path .. '/evalfocus.log'
+local redir_file = ' >>'.. _PLUGIN.path .. '/evalfocus.log' 
 
 function get_wslpath(winpath)
 	local wkpath = (winpath:gsub('\\','/')):sub(3)
@@ -34,7 +34,6 @@ LrTasks.startAsyncTask( function ()
 		{title = PluginTitle .. ' Processing'}
 	)
 	local TargetPhoto = CurrentCatalog:getTargetPhoto()
-
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
@@ -44,7 +43,7 @@ LrTasks.startAsyncTask( function ()
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 			local winpath = PhotoIt:getRawMetadata('path')
 			local FilePath = get_wslpath(winpath)
-			local CommandLine = shell .. python .. script_path .. FilePath
+			local CommandLine = shell .. python .. script_path .. FilePath  .. redir_file
 			info(CommandLine)
 			local Accuracy = LrTasks.execute(CommandLine)
 			info ('Accuracy=' .. Accuracy)

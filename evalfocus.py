@@ -92,7 +92,7 @@ scaleFactor = args["scale"],
 minNeighbors = args["neighbor"], 
 minSize = (minsize, minsize),
 maxSize = (maxsize, maxsize) )
-if len(faces):
+if len(faces) and (args["v"] > 1):
     print("frontal faces= ", faces)
 
 #Detect profile face
@@ -102,13 +102,13 @@ scaleFactor = args["scale"],
 minNeighbors = args["neighbor"], 
 minSize = (minsize, minsize),
 maxSize = (maxsize, maxsize) )
-if len(profile_faces):
+if len(profile_faces) and (args["v"] > 1):
     print("profile faces =", profile_faces)
 
 #Joint front & profile
 if len(profile_faces):
     faces = np.concatenate([faces, profile_faces])
-if (args["v"] > 0):
+if (args["v"] > 1):
     print("faces =", faces)
 
 face_laplacians = None
@@ -130,7 +130,7 @@ if len(faces):
         facelap = face_laplacians[index].var()
         if facelap > max_facelap:
             max_facelap = facelap
-        print( '%d %3.2f %d %d' % (index + 1, facelap, w, h) )
+        print( '%d %3.2f %d %d' % (index + 1, facelap, w, h), end=" " )
 
         longeye = max(w,h)
         mineye = int(longeye / 16)
@@ -144,6 +144,7 @@ if len(faces):
             print("eyes =", len(eyes))
         else:
             max_facelap = 0 #determine this area has no face.
+            print(" ")
 
         #Report Visualization
         #cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)

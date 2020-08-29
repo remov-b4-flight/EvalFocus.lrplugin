@@ -87,13 +87,13 @@ if (args["v"] > 0):
 
 #Detect front face
 front_cascade = cv2.CascadeClassifier(cascade_file_front)
-faces = front_cascade.detectMultiScale( gray, 
+front_faces = front_cascade.detectMultiScale( gray, 
 scaleFactor = args["scale"], 
 minNeighbors = args["neighbor"], 
 minSize = (minsize, minsize),
 maxSize = (maxsize, maxsize) )
-if len(faces) and (args["v"] > 1):
-    print("frontal faces= ", faces)
+if len(front_faces) and (args["v"] > 1):
+    print("front faces = ", front_faces)
 
 #Detect profile face
 profile_cascade = cv2.CascadeClassifier(cascade_file_prof)
@@ -103,13 +103,20 @@ minNeighbors = args["neighbor"],
 minSize = (minsize, minsize),
 maxSize = (maxsize, maxsize) )
 if len(profile_faces) and (args["v"] > 1):
-    print("profile faces =", profile_faces)
+    print("profile faces = ", profile_faces)
 
 #Joint front & profile
-if len(profile_faces):
-    faces = np.concatenate([faces, profile_faces])
+if len(front_faces) and len(profile_faces):
+    faces = np.vstack([front_faces, profile_faces])
+elif len(front_faces) and (len(profile_faces) == 0):
+    faces = front_faces.copy()
+elif (len(front_faces) == 0) and len(profile_faces):
+    faces = profile_faces.copy()
+else:
+    faces = np.empty([0,0,0,0])
+
 if (args["v"] > 1):
-    print("faces =", faces)
+    print("faces = ", faces)
 
 face_laplacians = None
 if len(faces):
@@ -122,7 +129,7 @@ print( '%d %3.2f %d %d' % (0, laplacian.var(), gray.shape[0], gray.shape[1]) )
 
 #Any faces is there
 if len(faces):
-    print("faces=", len(faces))
+    print("faces = ", len(faces))
     eye_cascade = cv2.CascadeClassifier(cascade_file_eye)
     max_facelap = 0
     #Face loop
@@ -141,7 +148,7 @@ if len(faces):
         minSize = (mineye, mineye),
         maxSize = (maxeye, maxeye) )        
         if len(eyes):
-            print("eyes =", len(eyes))
+            print("eyes = ", len(eyes))
         else:
             max_facelap = 0 #determine this area has no face.
             print(" ")
@@ -168,6 +175,6 @@ elif (0 < result < MIN_RESULT):
     result = MIN_RESULT
 
 if (args["v"] > 0):
-    print("result=",result)
+    print("result = ",result)
 
 sys.exit(result)

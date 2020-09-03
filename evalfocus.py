@@ -41,12 +41,13 @@ def resize_image_to_harf(image):
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.")
 ap.add_argument("-v", help = "verbose outputs", action='count', default = 0)
+ap.add_argument("-l", help = "save image log", action='store_true')
 ap.add_argument("-c", "--cascade", help = "cascade file", default = "haarcascade_frontalface_default.xml")
 ap.add_argument("-p", "--profile", help = "profile file", default = "haarcascade_profileface.xml")
 ap.add_argument("-e", "--eye", help = "eye cascade file", default = "haarcascade_eye.xml")
 ap.add_argument("-s", "--scale", help = "scale factor", type = float, default = 1.08)
 ap.add_argument("-n", "--neighbor", help = "minNeighbor param", type = int, default = 3)
-args=vars(ap.parse_args())
+args = vars(ap.parse_args())
 
 cascade_path = os.path.dirname(os.path.abspath(__file__))
 cascade_file_front = os.path.join(cascade_path, args["cascade"])
@@ -78,7 +79,7 @@ longside = max(image.shape[0],image.shape[1])
 minsize = int(longside / 10)
 maxsize = int(longside / 1.5)
 
-if (args["v"] > 0):
+if (args["v"] > 1):
     print("shape =", image.shape)
     print("scale =",args["scale"])
     print("neighbor =",args["neighbor"])
@@ -154,12 +155,13 @@ if len(faces):
             print(" ")
 
         #Report Visualization
-        #cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        #cv2.putText(image, "{}: {:.2f}".format("Face", face_laplacians[index].var()), (x, y),
-        #                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
-        #cv2.putText(image, "{}: {:.2f}".format("Image",laplacian.var()), (10, 30),
-        #    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
-        #write_image(image_path, image)
+        if (args["l"]):
+            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            cv2.putText(image, "{}: {:.2f} {}: {:2d}".format( "Face", face_laplacians[index].var(), "eyes", len(eyes) ), (x, y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
+            cv2.putText(image, "{}: {:.2f}".format("Image",laplacian.var()), (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
+            write_image(image_path, image)
     #End of face loop
     if (max_facelap > 0):
         result = int(max_facelap)

@@ -6,7 +6,8 @@ Author:@remov_b4_flight
 
 return {
 	metadataFieldsForPhotos = {
-		{id = 'accuracy', title = 'Accuracy', datatype = 'string', browsable = true, searchable = true }
+		{id = 'accuracy', title = 'Accuracy', datatype = 'string', browsable = true, searchable = true },
+		{id = 'rank', title = 'Rank', datatype = 'string', browsable = true, searchable = true },
 	},
-	schemaVersion = 2,
+	schemaVersion = 3,
 }

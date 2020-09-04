@@ -157,7 +157,7 @@ if len(faces):
         #Report Visualization
         if (args["l"]):
             cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            cv2.putText(image, "{}: {:.2f} {}: {:2d}".format( "Face", face_laplacians[index].var(), "eyes", len(eyes) ), (x, y),
+            cv2.putText(image, "{}: {:.2f} {}:{:2d}".format( "Face", face_laplacians[index].var(), "eyes", len(eyes) ), (x, y),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
             cv2.putText(image, "{}: {:.2f}".format("Image",laplacian.var()), (10, 30),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)

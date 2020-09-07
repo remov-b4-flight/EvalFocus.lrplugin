@@ -46,7 +46,7 @@ ap.add_argument("-c", "--cascade", help = "cascade file", default = "haarcascade
 ap.add_argument("-p", "--profile", help = "profile file", default = "haarcascade_profileface.xml")
 ap.add_argument("-e", "--eye", help = "eye cascade file", default = "haarcascade_eye.xml")
 ap.add_argument("-s", "--scale", help = "scale factor", type = float, default = 1.08)
-ap.add_argument("-n", "--neighbor", help = "minNeighbor param", type = int, default = 3)
+ap.add_argument("-n", "--neighbor", help = "minNeighbor param", type = int, default = 4)
 args = vars(ap.parse_args())
 
 cascade_path = os.path.dirname(os.path.abspath(__file__))
@@ -62,9 +62,7 @@ if (args["v"] > 1):
 #Process Image
 image_path = args["file"]
 
-if (args["v"] > 0):
-    print("--------")
-    print("input image =", image_path)
+print("input image =", image_path)
 
 original_image = cv2.imread(image_path)
 if original_image is None:
@@ -158,9 +156,9 @@ if len(faces):
         if (args["l"]):
             cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
             cv2.putText(image, "{}: {:.2f} {}:{:2d}".format( "Face", face_laplacians[index].var(), "eyes", len(eyes) ), (x, y),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.85, (0, 192, 0), 3)
             cv2.putText(image, "{}: {:.2f}".format("Image",laplacian.var()), (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 3)
+                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 192, 0), 3)
             write_image(image_path, image)
     #End of face loop
     if (max_facelap > 0):

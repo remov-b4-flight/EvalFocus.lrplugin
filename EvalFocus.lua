@@ -15,7 +15,7 @@ Logger:enable('logfile')
 local info = Logger:quickf('info')
 
 local AutoReject = 30
-local MinResult = 5
+local MINRESULT = 5
 
 local CurrentCatalog = LrApplication.activeCatalog()
 local shell = 'c:\\windows\\system32\\wsl.exe -e '
@@ -32,20 +32,19 @@ function get_wslpath(winpath)
 end
 
 function getRank(accuracy)
-	local r
+	local r = nil
 	if (accuracy >= 200) then r = 'A++'
 	elseif (accuracy >= 150) then r = 'A+'
 	elseif (accuracy >= 100) then r = 'A'
 	elseif (accuracy >= 50) then r = 'B'
-	elseif (accuracy > MinResult) then r = 'C'
-	else r = nil end
+	elseif (accuracy >= MINRESULT) then r = 'C'
 	return r
 end
 
 --Main part of this plugin.
 LrTasks.startAsyncTask( function ()
 	local ProgressBar = LrProgress(
-		{title = PluginTitle .. ' Processing..'}
+		{title = PluginTitle .. ' Process..'}
 	)
 	local TargetPhoto = CurrentCatalog:getTargetPhoto()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
@@ -61,15 +60,17 @@ LrTasks.startAsyncTask( function ()
 			info(CommandLine)
 			local Accuracy = LrTasks.execute(CommandLine)
 			info ('Accuracy = ' .. Accuracy)
-			PhotoIt:setPropertyForPlugin(_PLUGIN,'accuracy',Accuracy)
-			local Rank = getRank(Accuracy)
-			if Rank ~= nil then
-				info ('Rank = ' .. Rank)
-				PhotoIt:setPropertyForPlugin(_PLUGIN,'rank',Rank)
-			end
-			if (MinResult <= Accuracy and Accuracy < AutoReject) then
-				--Auto reject
-				PhotoIt:setRawMetadata('pickStatus', -1)
+			if (MINRESULT <= Accuracy) then
+
+				PhotoIt:setPropertyForPlugin(_PLUGIN,'accuracy',Accuracy)
+				local Rank = getRank(Accuracy)
+				if Rank ~= nil then
+					info ('Rank = ' .. Rank)
+					PhotoIt:setPropertyForPlugin(_PLUGIN,'rank',Rank)
+				end
+				if (Accuracy < AutoReject) then
+					PhotoIt:setRawMetadata('pickStatus', -1)
+				end
 			end
 			ProgressBar:setPortionComplete(i,countPhotos)
 		end --end of for photos loop

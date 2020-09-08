@@ -44,15 +44,15 @@ end
 --Main part of this plugin.
 LrTasks.startAsyncTask( function ()
 	local ProgressBar = LrProgress(
-		{title = PluginTitle .. ' Process..'}
+		{title = PluginTitle .. ' Running..'}
 	)
 	local TargetPhoto = CurrentCatalog:getTargetPhoto()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
-	info('-loop-')
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus',function()
 		local script_path = get_wslpath(_PLUGIN.path) .. script
+		info('-loop-')
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 			local winpath = PhotoIt:getRawMetadata('path')
 			local FilePath = get_wslpath(winpath)
@@ -74,8 +74,8 @@ LrTasks.startAsyncTask( function ()
 			end
 			ProgressBar:setPortionComplete(i,countPhotos)
 		end --end of for photos loop
+		ProgressBar:done()
 	end ) --end of withWriteAccessDo
-ProgressBar:done()
 info('-end-')
 end ) --end of startAsyncTask function()
 return

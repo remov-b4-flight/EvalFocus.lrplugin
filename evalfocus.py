@@ -35,13 +35,14 @@ def resize_image(image):
         return image
 
 def resize_image_to_harf(image):
-    return cv2.resize(image,None,fx=0.5, fy=0.5)
+    return cv2.resize(image,None,fx=0.5, fy=0.5,interpolation = cv2.INTER_AREA)
 
 #Option parse
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.")
-ap.add_argument("-v", help = "verbose outputs", action='count', default = 0)
-ap.add_argument("-l", help = "save image log", action='store_true')
+ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
+ap.add_argument("-l", "--log", help = "save image log", action = 'store_true')
+ap.add_argument("-f", "--full", help = "use full size", action = 'store_true')
 ap.add_argument("-c", "--cascade", help = "cascade file", default = "haarcascade_frontalface_default.xml")
 ap.add_argument("-p", "--profile", help = "profile file", default = "haarcascade_profileface.xml")
 ap.add_argument("-e", "--eye", help = "eye cascade file", default = "haarcascade_eye.xml")
@@ -54,7 +55,7 @@ cascade_file_front = os.path.join(cascade_path, args["cascade"])
 cascade_file_prof = os.path.join(cascade_path, args["profile"])
 cascade_file_eye = os.path.join(cascade_path, args["eye"])
 
-if (args["v"] > 1):
+if (args["v"] > 2):
     print("cascade front=", cascade_file_front)
     print("cascade profile=", cascade_file_prof)
     print("cascade eye=", cascade_file_eye)
@@ -69,15 +70,23 @@ if original_image is None:
     print(image_path, "CAN'T READ.")
     sys.exit(1)
 
-#image = original_image
-image = resize_image(original_image)
+if ( args["full"] ):
+    image = original_image
+    vlog_line = 8
+    vlog_size = 4
+    vlog_thick = 12
+else:
+    image = resize_image(original_image)
+    vlog_line = 2
+    vlog_size = 0.9
+    vlog_thick = 3
 
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 longside = max(image.shape[0],image.shape[1])
 minsize = int(longside / 10)
 maxsize = int(longside / 1.5)
 
-if (args["v"] > 1):
+if (args["v"] > 2):
     print("shape =", image.shape)
     print("scale =",args["scale"])
     print("neighbor =",args["neighbor"])
@@ -91,30 +100,26 @@ scaleFactor = args["scale"],
 minNeighbors = args["neighbor"], 
 minSize = (minsize, minsize),
 maxSize = (maxsize, maxsize) )
-if len(front_faces) and (args["v"] > 1):
-    print("front faces = ", front_faces)
-
-#Detect profile face
-profile_cascade = cv2.CascadeClassifier(cascade_file_prof)
-profile_faces = profile_cascade.detectMultiScale( gray, 
-scaleFactor = args["scale"], 
-minNeighbors = args["neighbor"], 
-minSize = (minsize, minsize),
-maxSize = (maxsize, maxsize) )
-if len(profile_faces) and (args["v"] > 1):
-    print("profile faces = ", profile_faces)
-
-#Joint front & profile
-if len(front_faces) and len(profile_faces):
-    faces = np.vstack([front_faces, profile_faces])
-elif len(front_faces) and (len(profile_faces) == 0):
+if len(front_faces):
+    if (args["v"] > 1):
+        print("front faces = ", front_faces)
     faces = front_faces.copy()
-elif (len(front_faces) == 0) and len(profile_faces):
-    faces = profile_faces.copy()
 else:
-    faces = np.empty([0,0,0,0])
+    #Detect profile face
+    profile_cascade = cv2.CascadeClassifier(cascade_file_prof)
+    profile_faces = profile_cascade.detectMultiScale( gray, 
+    scaleFactor = args["scale"], 
+    minNeighbors = args["neighbor"], 
+    minSize = (minsize, minsize),
+    maxSize = (maxsize, maxsize) )
+    if len(profile_faces):
+        if (args["v"] > 1):
+            print("profile faces = ", profile_faces)
+        faces = profile_faces.copy()
+    else:
+        faces = np.empty([0,0,0,0])
 
-if (args["v"] > 1):
+if (args["v"] > 0):
     print("faces = ", faces)
 
 face_laplacians = None
@@ -125,6 +130,8 @@ if len(faces):
 laplacian = cv2.Laplacian(gray, cv2.CV_64F)
 #Report about image
 print( '%d %3.2f %d %d' % (0, laplacian.var(), gray.shape[0], gray.shape[1]) ) 
+#By default, result be from entire image
+result = int(laplacian.var() + 0.5)
 
 #Any faces is there
 if len(faces):
@@ -145,7 +152,7 @@ if len(faces):
         scaleFactor = args["scale"], 
         minNeighbors = args["neighbor"], 
         minSize = (mineye, mineye),
-        maxSize = (maxeye, maxeye) )        
+        maxSize = (maxeye, maxeye) )
         if len(eyes):
             print("eyes = ", len(eyes))
         else:
@@ -153,28 +160,23 @@ if len(faces):
             print(" ")
 
         #Report Visualization
-        if (args["l"]):
-            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            cv2.putText(image, "{}: {:.2f} {}:{:2d}".format( "Face", face_laplacians[index].var(), "eyes", len(eyes) ), (x, y),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.85, (0, 192, 0), 3)
-            cv2.putText(image, "{}: {:.2f}".format("Image",laplacian.var()), (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 192, 0), 3)
+        if ( args["log"] ):
+            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), vlog_line)
+            cv2.putText(image, "{}: {:.2f} {}:{:2d}".format( "Face", face_laplacians[index].var(), "eyes", len(eyes) ), 
+                            (x, y), cv2.FONT_HERSHEY_SIMPLEX, vlog_size, (0, 127, 0), vlog_thick)
+            cv2.putText(image, "{}: {:.2f}".format("Image",laplacian.var()), 
+                            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, vlog_size, (192, 64, 64), vlog_thick)
             write_image(image_path, image)
     #End of face loop
     if (max_facelap > 0):
-        result = int(max_facelap)
-    else:
-        result = 0
-#Faces not detected
-else:
-    result = int(laplacian.var())
+        result = int(max_facelap + 0.5)
+
 #Return value to OS
 if (result > MAX_RESULT):
     result = MAX_RESULT
 elif (0 < result < MIN_RESULT): 
     result = MIN_RESULT
 
-if (args["v"] > 0):
-    print("result = ",result)
+print("result = ", result)
 
 sys.exit(result)

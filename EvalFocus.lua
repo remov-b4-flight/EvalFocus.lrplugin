@@ -1,7 +1,7 @@
 --[[
-EvalFocus.lua
 EvalFocus.lrplugin
-Author:@remov_b4_flight
+@file EvalFocus.lua
+@author @remov_b4_flight
 ]]
 
 local PluginTitle = 'EvalFocus'
@@ -20,9 +20,9 @@ local MINRESULT = 5
 local CurrentCatalog = LrApplication.activeCatalog()
 local shell = 'c:\\windows\\system32\\wsl.exe -e '
 local python = 'python3 '
-local script = '/evalfocus.py -v '
+local script = '/evalfocus.py '
 local wsl_pfx = '/mnt/'
-local redir_file = ' >>'.. _PLUGIN.path .. '\\evalfocus.log' 
+--local redir_file = ' >>'.. _PLUGIN.path .. '\\evalfocus.log' 
 
 function get_wslpath(winpath)
 	local wkpath = (winpath:gsub('\\','/')):sub(3)
@@ -38,6 +38,7 @@ function getRank(accuracy)
 	elseif (accuracy >= 100) then r = 'A'
 	elseif (accuracy >= 50) then r = 'B'
 	elseif (accuracy >= MINRESULT) then r = 'C'
+	end
 	return r
 end
 
@@ -57,7 +58,7 @@ LrTasks.startAsyncTask( function ()
 			local winpath = PhotoIt:getRawMetadata('path')
 			local FilePath = get_wslpath(winpath)
 			local CommandLine = shell .. python .. script_path .. FilePath 
-			info(CommandLine)
+			info(FilePath)
 			local Accuracy = LrTasks.execute(CommandLine)
 			info ('Accuracy = ' .. Accuracy)
 			if (MINRESULT <= Accuracy) then

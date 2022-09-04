@@ -9,27 +9,17 @@ local LrApplication = import 'LrApplication'
 local LrLogger = import 'LrLogger'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
-local Logger = LrLogger (PluginTitle)
+local Logger = LrLogger(PluginTitle)
 
 Logger:enable('logfile')
-local info = Logger:quickf('info')
 
 local AutoReject = 30
 local MINRESULT = 5
 
 local CurrentCatalog = LrApplication.activeCatalog()
-local shell = 'c:\\windows\\system32\\wsl.exe -e '
+local shell = 'sh '
 local python = 'python3 '
 local script = '/evalfocus.py '
-local wsl_pfx = '/mnt/'
---local redir_file = ' >>'.. _PLUGIN.path .. '\\evalfocus.log' 
-
-function get_wslpath(winpath)
-	local wkpath = (winpath:gsub('\\','/')):sub(3)
-	local drive = (winpath:sub(1,1)):lower()
-	local p = wsl_pfx .. drive .. wkpath
-	return p
-end
 
 function getRank(accuracy)
 	local r = nil
@@ -52,21 +42,20 @@ LrTasks.startAsyncTask( function ()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus',function()
-		local script_path = get_wslpath(_PLUGIN.path) .. script
-		info('-loop-')
+		local script_path = _PLUGIN.path .. script
+		Logger:debug('-loop-')
 		for i,PhotoIt in ipairs(SelectedPhotos) do
-			local winpath = PhotoIt:getRawMetadata('path')
-			local FilePath = get_wslpath(winpath)
+			local FilePath = PhotoIt:getRawMetadata('path')
 			local CommandLine = shell .. python .. script_path .. FilePath 
-			info(FilePath)
+			Logger:debug(FilePath)
 			local Accuracy = LrTasks.execute(CommandLine)
-			info ('Accuracy = ' .. Accuracy)
+			Logger:debug('Accuracy = ' .. Accuracy)
 			if (MINRESULT <= Accuracy) then
 
 				PhotoIt:setPropertyForPlugin(_PLUGIN,'accuracy',Accuracy)
 				local Rank = getRank(Accuracy)
 				if Rank ~= nil then
-					info ('Rank = ' .. Rank)
+					Logger:debug('Rank = ' .. Rank)
 					PhotoIt:setPropertyForPlugin(_PLUGIN,'rank',Rank)
 				end
 				if (Accuracy < AutoReject) then
@@ -77,6 +66,6 @@ LrTasks.startAsyncTask( function ()
 		end --end of for photos loop
 		ProgressBar:done()
 	end ) --end of withWriteAccessDo
-info('-end-')
+Logger:debug('-end-')
 end ) --end of startAsyncTask function()
 return

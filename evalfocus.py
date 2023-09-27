@@ -5,7 +5,6 @@ import argparse
 import cv2
 import os
 import sys
-import numpy as np
 
 #Constants
 MIN_RESULT = 5
@@ -62,20 +61,39 @@ height, width, _ = image.shape
 fd.setInputSize((width, height))
 _, faces=fd.detect(image)
 faces = faces if faces is not None else []
+
 writeflag = False
+count = 0
+max_result = 0
 for face in faces:
+    print("face ",count)
+    #Crop face
+    face_image = image[ int(face[1]):int(face[1]+face[3]),
+                        int(face[0]):int(face[0]+face[2])]
+    #Gray convert
+    gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
+    #laplacian convert
+    laplacian = cv2.Laplacian(gray, cv2.CV_64F)
+if (args["v"] > 3):
+    cv2.imshow("crop",laplacian)
+    cv2.waitKey(1000)
+    #get result
+    result = int(laplacian.var() + 0.5)
+    print("result =", result);
+
     #Report Visualization
     if ( args["log"] ):
         writeflag = True
         box = list(map(int, face[:4]))
         cv2.rectangle(image, box, (255, 0, 0), vlog_line)
-    print("Score=", face[14]);
+    print("Score =", face[-1]);
+    count += 1
+    if (result > max_result):
+        max_result = result
 
 if writeflag == True:
     write_image(image_path, image)
 #End of face loop
-#    if (max_facelap > 0):
-#        result = int(max_facelap + 0.5)
 
 #Return value to OS
 if (result > MAX_RESULT):
@@ -84,5 +102,4 @@ elif (0 < result < MIN_RESULT):
     result = MIN_RESULT
 
 print("result = ", result)
-
 sys.exit(result)

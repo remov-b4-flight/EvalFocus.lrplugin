@@ -34,72 +34,75 @@ args = vars(ap.parse_args())
 model_path = os.path.dirname(os.path.abspath(__file__))
 model = os.path.join(model_path, args["model"])
 
-if (args["v"] > 2):
-    print("model=", model)
+if (args["v"] > 2) : print("model=", model)
 
-#Process Image
 image_path = args["file"]
 
-print("input image =", image_path)
+if (args["v"] > 1) : print("input image =", image_path)
 
+#Read image
 original_image = cv2.imread(image_path)
 if original_image is None:
     print(image_path, "CAN'T READ.")
     sys.exit(1)
 image = original_image
 
-vlog_line = 3
-
-if (args["v"] > 2):
-    print("shape =", image.shape)
+if (args["v"] > 2) : print("shape =", image.shape)
 
 #Detect front face
-if (args["v"] > 2):
+if (args["v"] > 3):
     print("model =", model)
+
 fd = cv2.FaceDetectorYN_create(model, "", (0,0))
 height, width, _ = image.shape
 fd.setInputSize((width, height))
 _, faces=fd.detect(image)
-faces = faces if faces is not None else []
 
+if (args["v"] > 1):
+    print("faces =", len(faces) if faces is not None else 0)
+#If any face not found, process entire image.
+faces = faces if faces is not None else [[0,0,width,height]]
+
+vlog_line = int(max(width,height) / 1000)
+if (vlog_line < 3) : vlog_line = 3
 writeflag = False
 count = 0
 max_result = 0
+#Loop with detected faces
 for face in faces:
-    print("face ",count)
+    print("area ", count,end="")
     #Crop face
     face_image = image[ int(face[1]):int(face[1]+face[3]),
                         int(face[0]):int(face[0]+face[2])]
     #Gray convert
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
-    #laplacian convert
+    #Laplacian convert
     laplacian = cv2.Laplacian(gray, cv2.CV_64F)
-if (args["v"] > 3):
-    cv2.imshow("crop",laplacian)
-    cv2.waitKey(1000)
-    #get result
+    if (args["v"] > 2):
+        cv2.imshow("crop",laplacian)
+        cv2.waitKey(1000)
+    #Get result
     result = int(laplacian.var() + 0.5)
-    print("result =", result);
+    print(" result =", result,end="")
 
     #Report Visualization
     if ( args["log"] ):
         writeflag = True
         box = list(map(int, face[:4]))
         cv2.rectangle(image, box, (255, 0, 0), vlog_line)
-    print("Score =", face[-1]);
+    if (args["v"] > 1) : print(" Score =", face[-1],end="")
+    #End of loop
     count += 1
-    if (result > max_result):
-        max_result = result
-
-if writeflag == True:
-    write_image(image_path, image)
-#End of face loop
+    if (result > max_result) : max_result = result
+    print()
+#End loop of faces
+if (writeflag == True) : write_image(image_path, image)
 
 #Return value to OS
-if (result > MAX_RESULT):
-    result = MAX_RESULT
-elif (0 < result < MIN_RESULT): 
-    result = MIN_RESULT
+if (max_result > MAX_RESULT):
+    max_result = MAX_RESULT
+elif (0 < max_result < MIN_RESULT): 
+    max_result = MIN_RESULT
 
-print("result = ", result)
+print("result = ", max_result)
 sys.exit(result)

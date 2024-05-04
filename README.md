@@ -1,4 +1,4 @@
-# EvalFocus.lrplugin
+# EvalFocus.lrdevplugin
 EvalFocus-plugin
 Evalfocus is Adobe Lightroom plugin that evaluate correct focus on photo.
 ## pre-requesties
@@ -6,7 +6,7 @@ Evalfocus is Adobe Lightroom plugin that evaluate correct focus on photo.
 * Lightroom
 * homebrew
 * OpenCV
-* pip opcncv-python / opencv-pyton-contrib
+* pip modules opcncv-python / opencv-pyton-contrib
 ## install
 * install Evalfocus.lrplugin as normal lightroom plugin
 * make symbolic link on plugin path /opt/homebrew/Celllar/opencv/[version]/share/opencv4/quality to /opt/homebrew/share/opencv4/quality

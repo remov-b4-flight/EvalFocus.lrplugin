@@ -13,7 +13,7 @@ MIN_RESULT = 5
 MAX_RESULT = 255
 YAML_PATH = "/opt/homebrew/share/opencv4/quality"
 
-def write_image(file_path, image, sub_dir="/report", suffix=""):
+def write_image(file_path, image, sub_dir="/log", suffix=""):
     dir_file = os.path.split(file_path)
     dir = dir_file[0]
     file_name = dir_file[1]
@@ -30,7 +30,7 @@ result = 0
 #Option parse
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.")
-ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 2)
+ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
 ap.add_argument("-l", "--log", help = "save image log", action = 'store_true')
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
@@ -77,8 +77,10 @@ if (max(orig_height,orig_width) > resize_long) :
     else : #landscape
         target_size = (resize_long, int(resize_long / aspect))
 image = cv2.resize(original_image,target_size, interpolation = cv2.INTER_NEAREST_EXACT)
-cv2.imshow("resize",image)
-cv2.waitKey(1000)
+
+if (verbose >= 3) :
+    cv2.imshow("resize",image)
+    cv2.waitKey(1000)
 
 if (verbose >= 2) : print("shape =", image.shape)
 
@@ -95,7 +97,7 @@ if (verbose >= 1) :
     print("faces =", faces_count)
 
 #If any face not found, process entire image.
-faces = faces if faces is not None else [[0,0,width,height]]
+faces = faces if faces is not None else [[0,0,width,height,-1]]
 
 vlog_line = int(max(width,height) / 1000)
 if (vlog_line < 3) : vlog_line = 3
@@ -106,7 +108,7 @@ current_max = 0
 
 #Loop with detected faces
 for face in faces :
-    print("area ", count, end="")
+    if (verbose >= 1) : print("area ", count, end="")
     face_score = round(face[-1], 2) if faces_count > 0 else 0.0
     #Crop face
     face_x = int(face[1])
@@ -123,8 +125,8 @@ for face in faces :
         cv2.imshow("crop", laplacian)
         cv2.waitKey(1000)
     #Get result
-    result = int(laplacian.var() + 0.5)
-    print(" result =", result, end="")
+    value = int(laplacian.var() + 0.5)
+    if (verbose >= 1) : print(" value =", value, end="")
 
     #Report Visualization
     if ( args["log"] ) :
@@ -132,20 +134,20 @@ for face in faces :
         box = list(map(int, face[:4]))
         cv2.rectangle(image, box, (255, 0, 0), vlog_line)
         cv2.putText(image, str(face_score), (face_y, face_x), 
-                    cv2.FONT_HERSHEY_DUPLEX, 0.75, (255,255,0))
+                    cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0))
 
-    if (verbose > 1 and faces_count > 0) : print(" score =", face_score, end="")
+    if (verbose >= 1 and faces_count > 0) : print(" score =", face_score, end="")
     #End of loop
     count += 1
-    if (result > current_max) : current_max = result
-    print()
+    if (value > current_max) : current_max = value
+    if (verbose >= 1) : print()
 #End loop of faces
 if (writeflag == True) : write_image(image_path, image)
 
 #Return value to OS
-if (current_max > MAX_RESULT):
+if (current_max > MAX_RESULT) :
     current_max = MAX_RESULT
-elif (0 < current_max < MIN_RESULT): 
+elif (0 < current_max < MIN_RESULT) : 
     current_max = MIN_RESULT
 
 result = current_max

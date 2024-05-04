@@ -9,9 +9,7 @@ Evalfocus is Adobe Lightroom plugin that evaluate correct focus on photo.
 * pip opcncv-python / opencv-pyton-contrib
 ## install
 * install Evalfocus.lrplugin as normal lightroom plugin
-* make symbolic link on plugin path to /usr/share/opencv4/haarcacades/haarcacade_frontalface.xml
-* same also /usr/share/opencv4/haarcacades/haarcacade_profileface.xml
-* same also /usr/share/opencv4/haarcacades/haarcacade_eye.xml
+* make symbolic link on plugin path /opt/homebrew/Celllar/opencv/[version]/share/opencv4/quality to /opt/homebrew/share/opencv4/quality
 ## use
 Select Photos and Select Lightroom menu Library->Plugin Extra->Evalfocus->evaluate
 results are appeared as custom metadata 'Value' as string-nized number.

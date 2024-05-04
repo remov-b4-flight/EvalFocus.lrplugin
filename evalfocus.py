@@ -30,87 +30,111 @@ result = 0
 #Option parse
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.")
-ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 3)
+ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 2)
 ap.add_argument("-l", "--log", help = "save image log", action = 'store_true')
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
 ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default = "brisque_range_live.yml")
+ap.add_argument("--resize", help = "resize", default = 2000)
 args = vars(ap.parse_args())
 
+verbose = args["v"]
+resize_long = args["resize"]
 model_path = os.path.dirname(os.path.abspath(__file__))
 model = os.path.join(model_path, args["model"])
 
 brisque_model = YAML_PATH + os.sep + args["brisque_model"]
 brisque_range = YAML_PATH + os.sep + args["brisque_range"]
 
-if (args["v"] >= 2) : 
+if (verbose >= 3) : 
     print("model=", model)
     print("brisque_model=", brisque_model)
     print("brisque_range=", brisque_range)
 
 image_path = args["file"]
 
-if (args["v"] >= 1) : print("input image =", image_path)
+if (verbose >= 1) : print("input image =", image_path)
 
 #Read image
 original_image = cv2.imread(image_path)
 if original_image is None :
-    print(image_path, "CAN'T READ.")
+    print(image_path, " CAN'T READ.")
     sys.exit(1)
-image = original_image
 
 #BRISQUE evaluation
-brisque_array = cv2.quality.QualityBRISQUE_compute(image, brisque_model, brisque_range)
-brisque_score = brisque_array[0]
-if (args["v"] >= 1) : print("BRISQUE score =", brisque_score)
+brisque_array = cv2.quality.QualityBRISQUE_compute(original_image, brisque_model, brisque_range)
+brisque_score = round(brisque_array[0], 2)
+if (verbose >= 1) : print("BRISQUE score =", brisque_score)
 if (brisque_score > 80.0) :
-    if (args["v"] >= 2) : print("Evaluate terminated by low BRISQUE score.")
+    if (verbose >= 2) : print("Evaluate terminated by low BRISQUE score.")
     sys.exit(MIN_RESULT)
 
-if (args["v"] >= 2) : print("shape =", image.shape)
+orig_height, orig_width, _ = original_image.shape
+aspect = orig_width / orig_height
+if (max(orig_height,orig_width) > resize_long) :
+    if (orig_height >= orig_width) : #portlait
+        target_size = (int(resize_long * aspect), resize_long)
+    else : #landscape
+        target_size = (resize_long, int(resize_long / aspect))
+image = cv2.resize(original_image,target_size, interpolation = cv2.INTER_NEAREST_EXACT)
+cv2.imshow("resize",image)
+cv2.waitKey(1000)
+
+if (verbose >= 2) : print("shape =", image.shape)
 
 #Detect front face
-if (args["v"] >= 3) : print("model =", model)
-
 fd = cv2.FaceDetectorYN_create(model, "", (0,0))
 height, width, _ = image.shape
 fd.setInputSize((width, height))
-_, faces=fd.detect(image)
+fdresult, faces = fd.detect(image)
 
-if (args["v"] >= 1) :
-    print("faces =", len(faces) if faces is not None else 0)
+if (verbose >= 3) : print("face detect =", fdresult)
+
+faces_count = len(faces) if faces is not None else 0
+if (verbose >= 1) :
+    print("faces =", faces_count)
+
 #If any face not found, process entire image.
 faces = faces if faces is not None else [[0,0,width,height]]
 
 vlog_line = int(max(width,height) / 1000)
 if (vlog_line < 3) : vlog_line = 3
 writeflag = False
-count = 0
+
+count = 1 if faces_count > 0 else 0
 current_max = 0
 
 #Loop with detected faces
 for face in faces :
-    print("area ", count,end="")
+    print("area ", count, end="")
+    face_score = round(face[-1], 2) if faces_count > 0 else 0.0
     #Crop face
-    face_image = image[ int(face[1]):int(face[1]+face[3]),
-                        int(face[0]):int(face[0]+face[2])]
-    #Gray convert
+    face_x = int(face[1])
+    face_width = int(face[1]+face[3])
+    face_y = int(face[0])
+    face_height = int(face[0]+face[2])
+    face_image = image[ face_x:face_width,
+                        face_y:face_height ]
+    #Grayscale conversion
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
-    #Laplacian convert
+    #Laplacian conversion
     laplacian = cv2.Laplacian(gray, cv2.CV_64F)
-    if (args["v"] >= 2):
-        cv2.imshow("crop",laplacian)
+    if (verbose >= 2 and faces_count > 0) :
+        cv2.imshow("crop", laplacian)
         cv2.waitKey(1000)
     #Get result
     result = int(laplacian.var() + 0.5)
-    print(" result =", result,end="")
+    print(" result =", result, end="")
 
     #Report Visualization
     if ( args["log"] ) :
         writeflag = True
         box = list(map(int, face[:4]))
         cv2.rectangle(image, box, (255, 0, 0), vlog_line)
-    if (args["v"] > 1) : print(" Score =", face[-1],end="")
+        cv2.putText(image, str(face_score), (face_y, face_x), 
+                    cv2.FONT_HERSHEY_DUPLEX, 0.75, (255,255,0))
+
+    if (verbose > 1 and faces_count > 0) : print(" score =", face_score, end="")
     #End of loop
     count += 1
     if (result > current_max) : current_max = result
@@ -124,5 +148,6 @@ if (current_max > MAX_RESULT):
 elif (0 < current_max < MIN_RESULT): 
     current_max = MIN_RESULT
 
-print("result = ", current_max)
+result = current_max
+print("result = ", result)
 sys.exit(result)

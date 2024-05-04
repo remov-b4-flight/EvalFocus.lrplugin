@@ -16,7 +16,10 @@ return {
 		{title = 'Evaluate',
 		file = 'EvalFocus.lua',
 		enabledWhen = 'photosAvailable',},
+		{title = 'Clear Evaluate',
+		file = 'EvalClear.lua',
+		enabledWhen = 'photosAvailable',},
 	},
-	VERSION = { major=0, minor=4, revision=0, build=0, },
+	VERSION = { major=0, minor=5, revision=0, build=0, },
 
 }

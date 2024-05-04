@@ -1,13 +1,19 @@
 --[[
-metadata.lua
 EvalFocus.lrplugin
-Author:@remov_b4_flight
+@file MetadataDefinition.lua
+@author @remov_b4_flight
 ]]
 
 return {
 	metadataFieldsForPhotos = {
-		{id = 'accuracy', title = 'Accuracy', datatype = 'string', browsable = true, searchable = true },
-		{id = 'rank', title = 'Rank', datatype = 'string', browsable = true, searchable = true },
+		{id = 'value', title = 'Value', datatype = 'string', browsable = true, searchable = true, readOnly = true },
+		{id = 'rank', title = 'Rank', datatype = 'enum', browsable = true, searchable = true, readOnly = true 
+			values = {
+				{value = nil, title ='unknown'},
+				{value = 'yes', title ='looks good'},
+				{value = 'no', title ='rejectable'},
+			},
+		},
 	},
-	schemaVersion = 3,
+	schemaVersion = 4,
 }

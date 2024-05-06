@@ -1,8 +1,8 @@
---[[
-EvalImage.lrplugin
+--[[-------------------------------------------------------
+EvalImage.lrdevplugin
 @file EvalCrear.lua
 @author @remov_b4_flight
-]]
+---------------------------------------------------------]]
 
 local PluginTitle = 'EvalFocus'
 local LrApplication = import 'LrApplication'
@@ -20,11 +20,10 @@ LrTasks.startAsyncTask( function ()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
-	CurrentCatalog:withWriteAccessDo('Evaluate Focus',function()
+	CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
 		for i,PhotoIt in ipairs(SelectedPhotos) do
-				PhotoIt:setPropertyForPlugin(_PLUGIN,'accuracy',nil)
-				PhotoIt:setPropertyForPlugin(_PLUGIN,'rank',nil)
-			ProgressBar:setPortionComplete(i,countPhotos)
+				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', nil)
+			ProgressBar:setPortionComplete(i, countPhotos)
 		end --end of for photos loop
 		ProgressBar:done()
 	end ) --end of withWriteAccessDo

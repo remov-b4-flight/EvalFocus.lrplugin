@@ -12,8 +12,10 @@ import sys
 MIN_RESULT = 5
 MAX_RESULT = 255
 YAML_PATH = "/opt/homebrew/share/opencv4/quality"
+MIN_LS = 2000
+MAX_LS = 3000
 
-def write_image(file_path, image, sub_dir="/log", suffix=""):
+def write_image(file_path, image, sub_dir="/log", suffix="") :
     dir_file = os.path.split(file_path)
     dir = dir_file[0]
     file_name = dir_file[1]
@@ -25,6 +27,20 @@ def write_image(file_path, image, sub_dir="/log", suffix=""):
     os.makedirs(report_dir, exist_ok=True)
     cv2.imwrite(export_file_path, image)
 
+def adjust_long(long_side) :
+    print("adjust_long() input =",long_side)
+    long_result = long_side
+    for dv in (2, 4, 8) :
+        print("adjust_long() dv =",dv)
+        ls = int(long_side / dv)
+        print("adjust_long() ls =",ls)
+        if (MIN_LS < ls and ls <= MAX_LS) :
+            long_result = ls
+            break
+
+    print("adjust_long() result =",long_result)
+    return long_result
+#main
 result = 0
 
 #Option parse
@@ -35,7 +51,7 @@ ap.add_argument("-l", "--log", help = "save image log", action = 'store_true')
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
 ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default = "brisque_range_live.yml")
-ap.add_argument("--resize", help = "resize", default = 2000)
+ap.add_argument("--resize", help = "resize", type =int, default = 2000)
 args = vars(ap.parse_args())
 
 verbose = args["v"]
@@ -70,13 +86,17 @@ if (brisque_score > 80.0) :
     sys.exit(MIN_RESULT)
 
 orig_height, orig_width, _ = original_image.shape
-aspect = orig_width / orig_height
-if (max(orig_height,orig_width) > resize_long) :
+long_side = max(orig_height,orig_width)
+if(long_side >= MIN_LS) :
+    aspect = orig_width / orig_height
+    resize_long = adjust_long(long_side)
     if (orig_height >= orig_width) : #portlait
         target_size = (int(resize_long * aspect), resize_long)
     else : #landscape
         target_size = (resize_long, int(resize_long / aspect))
-image = cv2.resize(original_image,target_size, interpolation = cv2.INTER_NEAREST_EXACT)
+    image = cv2.resize(original_image,target_size, interpolation = cv2.INTER_NEAREST_EXACT)
+else :
+    image = original_image
 
 if (verbose >= 3) :
     cv2.imshow("resize",image)

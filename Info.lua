@@ -1,8 +1,8 @@
---[[
-Info.lua
-EvalFocus.lrplugin
-Author:@remov_b4_flight
-]]
+--[[-------------------------------------------------------
+EvalFocus.lrdevplugin
+@file	Info.lua
+@author	@remov_b4_flight
+---------------------------------------------------------]]
 
 return {
 
@@ -12,6 +12,8 @@ return {
 	LrPluginName = 'EvalFocus',
 	LrPluginInfoUrl='https://twitter.com/remov_b4_flight',
 	LrMetadataProvider = 'MetadataDefinition.lua',
+	LrPluginInfoProvider = 'PluginInfo.lua',
+	LrInitPlugin = 'PluginInit.lua',
 	LrLibraryMenuItems = { 
 		{title = 'Evaluate',
 		file = 'EvalFocus.lua',

@@ -1,5 +1,5 @@
 --[[
-EvalFocus.lrplugin
+EvalFocus.lrdevplugin
 @file EvalFocus.lua
 @author @remov_b4_flight
 ]]
@@ -10,26 +10,21 @@ local LrLogger = import 'LrLogger'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
 local Logger = LrLogger(PluginTitle)
+local prefs = import 'LrPrefs'.prefsForPlugin()
 
 Logger:enable('logfile')
 
-local AutoReject = 30
 local MINRESULT = 5
-
 local CurrentCatalog = LrApplication.activeCatalog()
 local shell = 'sh '
 local python = 'python3 '
 local script = '/evalfocus.py '
 
-function getRank(accuracy)
-	local r = nil
-	if (accuracy >= 200) then r = 'A++'
-	elseif (accuracy >= 150) then r = 'A+'
-	elseif (accuracy >= 100) then r = 'A'
-	elseif (accuracy >= 50) then r = 'B'
-	elseif (accuracy >= MINRESULT) then r = 'C'
-	end
-	return r
+if (prefs.AutoReject == nil) then
+	prefs.AutoReject = false
+end
+if (prefs.RejectRange == nil) then
+	prefs.RejectRange = 30
 end
 
 --Main part of this plugin.
@@ -41,28 +36,24 @@ LrTasks.startAsyncTask( function ()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
-	CurrentCatalog:withWriteAccessDo('Evaluate Focus',function()
+	CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
 		local script_path = _PLUGIN.path .. script
 		Logger:debug('-loop-')
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 			local FilePath = PhotoIt:getRawMetadata('path')
 			local CommandLine = shell .. python .. script_path .. FilePath 
 			Logger:debug(FilePath)
-			local Accuracy = LrTasks.execute(CommandLine)
-			Logger:debug('Accuracy = ' .. Accuracy)
-			if (MINRESULT <= Accuracy) then
+			local value = LrTasks.execute(CommandLine)
+			Logger:debug('value = ' .. value)
+			if (MINRESULT <= value) then
 
-				PhotoIt:setPropertyForPlugin(_PLUGIN,'accuracy',Accuracy)
-				local Rank = getRank(Accuracy)
-				if Rank ~= nil then
-					Logger:debug('Rank = ' .. Rank)
-					PhotoIt:setPropertyForPlugin(_PLUGIN,'rank',Rank)
-				end
-				if (Accuracy < AutoReject) then
+				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
+				if (prefs.AutoReject == true  and value < prefs.RejectRange) then
+					Logger:debug('rejected by value.')
 					PhotoIt:setRawMetadata('pickStatus', -1)
 				end
 			end
-			ProgressBar:setPortionComplete(i,countPhotos)
+			ProgressBar:setPortionComplete(i, countPhotos)
 		end --end of for photos loop
 		ProgressBar:done()
 	end ) --end of withWriteAccessDo

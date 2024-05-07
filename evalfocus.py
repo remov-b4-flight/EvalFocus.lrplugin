@@ -12,8 +12,8 @@ import sys
 MIN_RESULT = 5
 MAX_RESULT = 255
 YAML_PATH = "/opt/homebrew/share/opencv4/quality"
-MIN_LS = 2000
-MAX_LS = 3000
+SMALL_LS = 3000
+BIG_LS = 8000
 
 def write_image(file_path, image, sub_dir="/log", suffix="") :
     dir_file = os.path.split(file_path)
@@ -28,18 +28,14 @@ def write_image(file_path, image, sub_dir="/log", suffix="") :
     cv2.imwrite(export_file_path, image)
 
 def adjust_long(long_side) :
-    print("adjust_long() input =",long_side)
-    long_result = long_side
-    for dv in (2, 4, 8) :
-        print("adjust_long() dv =",dv)
-        ls = int(long_side / dv)
-        print("adjust_long() ls =",ls)
-        if (MIN_LS < ls and ls <= MAX_LS) :
-            long_result = ls
-            break
-
-    print("adjust_long() result =",long_result)
+    long_result = -1
+    if (long_side >= BIG_LS) :
+        long_result = int(long_side / 4)
+    elif (SMALL_LS <= long_side and long_side < BIG_LS) :
+        long_result = int(long_side / 2)
+ 
     return long_result
+
 #main
 result = 0
 
@@ -51,11 +47,9 @@ ap.add_argument("-l", "--log", help = "save image log", action = 'store_true')
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
 ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default = "brisque_range_live.yml")
-ap.add_argument("--resize", help = "resize", type =int, default = 2000)
 args = vars(ap.parse_args())
 
 verbose = args["v"]
-resize_long = args["resize"]
 model_path = os.path.dirname(os.path.abspath(__file__))
 model = os.path.join(model_path, args["model"])
 
@@ -63,9 +57,9 @@ brisque_model = YAML_PATH + os.sep + args["brisque_model"]
 brisque_range = YAML_PATH + os.sep + args["brisque_range"]
 
 if (verbose >= 3) : 
-    print("model=", model)
-    print("brisque_model=", brisque_model)
-    print("brisque_range=", brisque_range)
+    print("model =", model)
+    print("brisque_model =", brisque_model)
+    print("brisque_range =", brisque_range)
 
 image_path = args["file"]
 
@@ -87,16 +81,16 @@ if (brisque_score > 80.0) :
 
 orig_height, orig_width, _ = original_image.shape
 long_side = max(orig_height,orig_width)
-if(long_side >= MIN_LS) :
+resize_long = adjust_long(long_side)
+if (resize_long < 0) : # No resize
+    image = original_image
+else :
     aspect = orig_width / orig_height
-    resize_long = adjust_long(long_side)
     if (orig_height >= orig_width) : #portlait
         target_size = (int(resize_long * aspect), resize_long)
     else : #landscape
         target_size = (resize_long, int(resize_long / aspect))
     image = cv2.resize(original_image,target_size, interpolation = cv2.INTER_NEAREST_EXACT)
-else :
-    image = original_image
 
 if (verbose >= 3) :
     cv2.imshow("resize",image)

@@ -47,6 +47,8 @@ ap.add_argument("-l", "--log", help = "save image log", action = 'store_true')
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
 ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default = "brisque_range_live.yml")
+ap.add_argument("-n", "--noresize", help = "no resize", action = 'store_true')
+
 args = vars(ap.parse_args())
 
 verbose = args["v"]
@@ -82,7 +84,7 @@ if (brisque_score > 80.0) :
 orig_height, orig_width, _ = original_image.shape
 long_side = max(orig_height,orig_width)
 resize_long = adjust_long(long_side)
-if (resize_long < 0) : # No resize
+if (resize_long < 0 or args["noresize"] == True) : # No resize
     image = original_image
 else :
     aspect = orig_width / orig_height
@@ -103,8 +105,6 @@ fd = cv2.FaceDetectorYN_create(model, "", (0,0))
 height, width, _ = image.shape
 fd.setInputSize((width, height))
 fdresult, faces = fd.detect(image)
-
-if (verbose >= 3) : print("face detect =", fdresult)
 
 faces_count = len(faces) if faces is not None else 0
 if (verbose >= 1) :
@@ -134,13 +134,17 @@ for face in faces :
     #Grayscale conversion
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
     #Laplacian conversion
-    laplacian = cv2.Laplacian(gray, cv2.CV_64F)
+    laplacian = cv2.Laplacian(gray, cv2.CV_8U)
     if (verbose >= 2 and faces_count > 0) :
-        cv2.imshow("crop", laplacian)
-        cv2.waitKey(1000)
+        cv2.imshow("crop8", laplacian)
+        cv2.waitKey(1500)
     #Get result
-    value = int(laplacian.var() + 0.5)
-    if (verbose >= 1) : print(" value =", value, end="")
+    mean_array ,stddev_array = cv2.meanStdDev(laplacian)
+    mean = round(mean_array[0][0], 2)
+    stddev = stddev_array[0][0]
+    value = int((stddev * 8) + 0.5)
+    if (verbose >= 1) : print(" stddev =", round(stddev, 2), end="")
+    if (verbose >= 2) : print(" mean =", mean, end="")
 
     #Report Visualization
     if ( args["log"] ) :

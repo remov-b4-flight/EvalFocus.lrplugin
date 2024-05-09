@@ -66,7 +66,6 @@ if (verbose >= 3) :
 image_path = args["file"]
 
 if (verbose >= 1) : print("input image =", image_path)
-
 #Read image
 original_image = cv2.imread(image_path)
 if original_image is None :

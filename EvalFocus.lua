@@ -16,9 +16,9 @@ Logger:enable('logfile')
 
 local MINRESULT = 5
 local CurrentCatalog = LrApplication.activeCatalog()
-local shell = 'sh '
-local python = 'python3 '
+local python = '/opt/homebrew/bin/python3 '
 local script = '/evalfocus.py '
+local script_path = _PLUGIN.path .. script
 
 if (prefs.AutoReject == nil) then
 	prefs.AutoReject = false
@@ -37,13 +37,12 @@ LrTasks.startAsyncTask( function ()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
-		local script_path = _PLUGIN.path .. script
 		Logger:debug('-loop-')
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 			local FilePath = PhotoIt:getRawMetadata('path')
-			local CommandLine = shell .. python .. script_path .. FilePath 
+			local CommandLine = python .. script_path .. FilePath  
 			Logger:debug(FilePath)
-			local value = LrTasks.execute(CommandLine)
+			local value = LrTasks.execute(CommandLine) / 256
 			Logger:debug('value = ' .. value)
 			if (MINRESULT <= value) then
 

@@ -8,13 +8,25 @@ import cv2
 import os
 import sys
 
-#Constants
+# Constants
 MIN_RESULT = 5
 MAX_RESULT = 255
 YAML_PATH = "/opt/homebrew/share/opencv4/quality"
 SMALL_LS = 3000
 BIG_LS = 8000
+VISUAL_WAIT = 1500
+MOUTH_DEDUCT = 0.75
+# FaceDetectorYN result index
+FACE_X = 0; FACE_Y = 1
+FACE_WIDTH = 2 ; FACE_HEIGHT = 3
+FACE_REYE_X = 4 ; FACE_REYE_Y = 5
+FACE_LEYE_X = 6 ; FACE_LEYE_Y = 7
+FACE_NOSE_X = 8 ; FACE_NOSE_Y = 9
+FACE_RMOUTH_X = 10 ; FACE_RMOUTH_Y = 11
+FACE_LMOUTH_X = 12 ; FACE_LMOUTH_Y = 13
+FACE_TRUSTY = 14
 
+# Function
 def write_image(file_path, image, sub_dir="/log", suffix="") :
     dir_file = os.path.split(file_path)
     dir = dir_file[0]
@@ -26,7 +38,7 @@ def write_image(file_path, image, sub_dir="/log", suffix="") :
 
     os.makedirs(report_dir, exist_ok=True)
     cv2.imwrite(export_file_path, image)
-
+# Functopm
 def adjust_long(long_side) :
     long_result = -1
     if (long_side >= BIG_LS) :
@@ -36,10 +48,10 @@ def adjust_long(long_side) :
  
     return long_result
 
-#main
+# Main
 result = 0
 
-#Option parse
+# Option parse
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.")
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
@@ -66,13 +78,13 @@ if (verbose >= 3) :
 image_path = args["file"]
 
 if (verbose >= 1) : print("input image =", image_path)
-#Read image
+# Read image
 original_image = cv2.imread(image_path)
 if original_image is None :
     print(image_path, " CAN'T READ.")
     sys.exit(1)
 
-#BRISQUE evaluation
+# BRISQUE evaluation
 brisque_array = cv2.quality.QualityBRISQUE_compute(original_image, brisque_model, brisque_range)
 brisque_score = round(brisque_array[0], 2)
 if (verbose >= 1) : print("BRISQUE score =", brisque_score)
@@ -95,11 +107,11 @@ else :
 
 if (verbose >= 3) :
     cv2.imshow("resize",image)
-    cv2.waitKey(1000)
+    cv2.waitKey(VISUAL_WAIT)
 
 if (verbose >= 2) : print("shape =", image.shape)
 
-#Detect front face
+# Detect faces
 fd = cv2.FaceDetectorYN_create(model, "", (0,0))
 height, width, _ = image.shape
 fd.setInputSize((width, height))
@@ -109,8 +121,8 @@ faces_count = len(faces) if faces is not None else 0
 if (verbose >= 1) :
     print("faces =", faces_count)
 
-#If any face not found, process entire image.
-faces = faces if faces is not None else [[0,0,width,height,-1]]
+# If any face not found, process entire image.
+faces = faces if faces is not None else [[0, 0, width, height, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
 vlog_line = int(max(width,height) / 1000)
 if (vlog_line < 3) : vlog_line = 3
@@ -119,49 +131,55 @@ writeflag = False
 count = 1 if faces_count > 0 else 0
 current_max = 0
 
-#Loop with detected faces
+# Loop with detected faces
 for face in faces :
+    face_rmouth_x = int(face[FACE_RMOUTH_X])
+    face_lmouth_x = int(face[FACE_LMOUTH_X])
+    if (faces_count >= 1 and verbose >= 2) :
+        print("mouse = ", face_rmouth_x,face_lmouth_x)
+
     if (verbose >= 1) : print("area ", count, end="")
-    face_score = round(face[-1], 2) if faces_count > 0 else 0.0
+    face_trusty = round(face[FACE_TRUSTY], 2) if faces_count > 0 else 0.0
     #Crop face
-    face_x = int(face[1])
-    face_width = int(face[1]+face[3])
-    face_y = int(face[0])
-    face_height = int(face[0]+face[2])
-    face_image = image[ face_x:face_width,
-                        face_y:face_height ]
+    face_x = int(face[FACE_X])
+    face_yy = int(face[FACE_X]+face[FACE_HEIGHT])
+    face_y = int(face[FACE_Y])
+    face_xx = int(face[FACE_Y]+face[FACE_WIDTH])
+    face_image = image[ face_x:face_yy,
+                        face_y:face_xx ]
     #Grayscale conversion
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
     #Laplacian conversion
     laplacian = cv2.Laplacian(gray, cv2.CV_8U)
     if (verbose >= 2 and faces_count > 0) :
-        cv2.imshow("crop8", laplacian)
-        cv2.waitKey(1500)
-    #Get result
+        cv2.imshow("crop", laplacian)
+        cv2.waitKey(VISUAL_WAIT)
+    # Get result
     mean_array ,stddev_array = cv2.meanStdDev(laplacian)
     mean = round(mean_array[0][0], 2)
     stddev = stddev_array[0][0]
+    if (face_rmouth_x == 0 and face_lmouth_x == 0) : stddev *= MOUTH_DEDUCT
     value = int((stddev * 8) + 0.5)
     if (verbose >= 1) : print(" stddev =", round(stddev, 2), end="")
     if (verbose >= 2) : print(" mean =", mean, end="")
 
-    #Report Visualization
+    # Report Visualization
     if ( args["log"] ) :
         writeflag = True
         box = list(map(int, face[:4]))
         cv2.rectangle(image, box, (255, 0, 0), vlog_line)
-        cv2.putText(image, str(face_score), (face_y, face_x), 
+        cv2.putText(image, str(face_trusty), (face_y, face_x), 
                     cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0))
 
-    if (verbose >= 1 and faces_count > 0) : print(" score =", face_score, end="")
-    #End of loop
+    if (verbose >= 1 and faces_count > 0) : print(" score =", face_trusty, end="")
+    # End of loop
     count += 1
     if (value > current_max) : current_max = value
     if (verbose >= 1) : print()
-#End loop of faces
+# End loop of faces
 if (writeflag == True) : write_image(image_path, image)
 
-#Return value to OS
+# Return value to OS
 if (current_max > MAX_RESULT) :
     current_max = MAX_RESULT
 elif (0 < current_max < MIN_RESULT) : 

@@ -26,19 +26,18 @@ FACE_RMOUTH_X = 10 ; FACE_RMOUTH_Y = 11
 FACE_LMOUTH_X = 12 ; FACE_LMOUTH_Y = 13
 FACE_TRUSTY = 14
 
-# Function
-def write_image(file_path, image, sub_dir="/log", suffix="") :
-    dir_file = os.path.split(file_path)
-    dir = dir_file[0]
-    file_name = dir_file[1]
-    report_dir = dir + sub_dir
-
-    root, ext = os.path.splitext(report_dir + "/" + file_name)
-    export_file_path = root + suffix + ext
-
+# Write vlog image to home
+def write_image(file_path, image, sub_dir="vlog", suffix="") :
+    homedir = os.environ['HOME']
+    (_, file_name) = os.path.split(file_path)
+    report_dir = os.path.join(homedir, sub_dir)
     os.makedirs(report_dir, exist_ok=True)
+
+    export_file_path = os.path.join(report_dir,file_name)
+
     cv2.imwrite(export_file_path, image)
-# Function
+
+# get 1/(2^n) long side size for image
 def adjust_long(long_side) :
     long_result = -1
     if (long_side >= BIG_LS) :

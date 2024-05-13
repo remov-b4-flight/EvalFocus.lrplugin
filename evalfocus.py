@@ -27,7 +27,7 @@ FACE_LMOUTH_X = 12 ; FACE_LMOUTH_Y = 13
 FACE_TRUSTY = 14
 
 # Write vlog image to home
-def write_image(file_path, image, sub_dir="vlog", suffix="") :
+def write_image(file_path, image, sub_dir="vlog") :
     homedir = os.environ['HOME']
     (_, file_name) = os.path.split(file_path)
     report_dir = os.path.join(homedir, sub_dir)
@@ -63,11 +63,11 @@ ap.add_argument("-n", "--noresize", help = "no resize", action = 'store_true')
 args = vars(ap.parse_args())
 
 verbose = args["v"]
-model_path = os.path.dirname(os.path.abspath(__file__))
-model = os.path.join(model_path, args["model"])
+script_path = os.path.dirname(os.path.abspath(__file__))
+fd_model = os.path.join(script_path, args["model"])
 
-brisque_model = YAML_PATH + os.sep + args["brisque_model"]
-brisque_range = YAML_PATH + os.sep + args["brisque_range"]
+brisque_model = os.path.join(script_path, args["brisque_model"])
+brisque_range = os.path.join(script_path, args["brisque_range"])
 
 if (verbose >= 3) : 
     print("model =", model)
@@ -111,14 +111,13 @@ if (verbose >= 3) :
 if (verbose >= 2) : print("shape =", image.shape)
 
 # Detect faces
-fd = cv2.FaceDetectorYN_create(model, "", (0,0))
+fd = cv2.FaceDetectorYN_create(fd_model, "", (0,0))
 height, width, _ = image.shape
 fd.setInputSize((width, height))
-fdresult, faces = fd.detect(image)
+_, faces = fd.detect(image)
 
 faces_count = len(faces) if faces is not None else 0
-if (verbose >= 1) :
-    print("faces =", faces_count)
+if (verbose >= 1) : print("faces =", faces_count)
 
 # If any face not found, process entire image.
 faces = faces if faces is not None else [[

@@ -141,12 +141,12 @@ for face in faces :
     if (verbose >= 1) : print("area ", count, end="")
     face_trusty = round(face[FACE_TRUSTY], 2) if faces_count > 0 else 0.0
     #Crop face
-    face_x = int(face[FACE_X])
-    face_yy = int(face[FACE_X]+face[FACE_HEIGHT])
-    face_y = int(face[FACE_Y])
-    face_xx = int(face[FACE_Y]+face[FACE_WIDTH])
-    face_image = image[ face_x:face_yy,
-                        face_y:face_xx ]
+    face_x1 = int(face[FACE_X])
+    face_x2 = int(face[FACE_X]+face[FACE_WIDTH])
+    face_y1 = int(face[FACE_Y])
+    face_y2 = int(face[FACE_Y]+face[FACE_HEIGHT])
+    face_image = image[ face_y1:face_y2,
+                        face_x1:face_x2 ]
     #Grayscale conversion
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
     #Laplacian conversion

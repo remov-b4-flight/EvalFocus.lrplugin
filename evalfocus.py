@@ -11,7 +11,7 @@ import sys
 # Constants
 MIN_RESULT = 5
 MAX_RESULT = 255
-YAML_PATH = "/opt/homebrew/share/opencv4/quality"
+YAML_PATH = "."
 SMALL_LS = 3000
 BIG_LS = 8000
 VISUAL_WAIT = 1500
@@ -38,7 +38,7 @@ def write_image(file_path, image, sub_dir="/log", suffix="") :
 
     os.makedirs(report_dir, exist_ok=True)
     cv2.imwrite(export_file_path, image)
-# Functopm
+# Function
 def adjust_long(long_side) :
     long_result = -1
     if (long_side >= BIG_LS) :
@@ -122,43 +122,57 @@ if (verbose >= 1) :
     print("faces =", faces_count)
 
 # If any face not found, process entire image.
-faces = faces if faces is not None else [[0, 0, width, height, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+faces = faces if faces is not None else [[
+    0, 0, width, height, 
+    0, 0,   # right eye (x,y)
+    0, 0,   # left eye (x,y)
+    0, 0,   # nose (x,y)
+    -1, -1,   # right mouth edge (x,y)
+    -1, -1,   # left mouth edge (x,y)
+    -1
+]]
 
 vlog_line = int(max(width,height) / 1000)
 if (vlog_line < 3) : vlog_line = 3
 writeflag = False
 
-count = 1 if faces_count > 0 else 0
+count = 1 if faces_count >= 1 else 0
 current_max = 0
 
 # Loop with detected faces
 for face in faces :
-    face_rmouth_x = int(face[FACE_RMOUTH_X])
-    face_lmouth_x = int(face[FACE_LMOUTH_X])
-    if (faces_count >= 1 and verbose >= 2) :
-        print("mouse = ", face_rmouth_x,face_lmouth_x)
 
     if (verbose >= 1) : print("area ", count, end="")
-    face_trusty = round(face[FACE_TRUSTY], 2) if faces_count > 0 else 0.0
+    face_rmouth_x = int(face[FACE_RMOUTH_X])
+    face_rmouth_y = int(face[FACE_RMOUTH_Y])
+    face_lmouth_x = int(face[FACE_LMOUTH_X])
+    face_lmouth_y = int(face[FACE_LMOUTH_Y])
+    if (faces_count >= 1 and verbose >= 2) :
+        print(" mouth =", face_rmouth_x, face_lmouth_x, end="")
+    face_trusty = round(face[FACE_TRUSTY], 2) if faces_count >= 1 else 0.0
     #Crop face
     face_x1 = int(face[FACE_X])
-    face_x2 = int(face[FACE_X]+face[FACE_WIDTH])
+    face_x2 = int(face[FACE_X] + face[FACE_WIDTH])
     face_y1 = int(face[FACE_Y])
-    face_y2 = int(face[FACE_Y]+face[FACE_HEIGHT])
-    face_image = image[ face_y1:face_y2,
-                        face_x1:face_x2 ]
+    face_y2 = int(face[FACE_Y] + face[FACE_HEIGHT])
+    face_image = image[ face_y1 : face_y2,
+                        face_x1 : face_x2 ]
     #Grayscale conversion
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
     #Laplacian conversion
     laplacian = cv2.Laplacian(gray, cv2.CV_8U)
-    if (verbose >= 2 and faces_count > 0) :
+    if (verbose >= 2 and faces_count >= 1) :
         cv2.imshow("crop", laplacian)
         cv2.waitKey(VISUAL_WAIT)
     # Get result
     mean_array ,stddev_array = cv2.meanStdDev(laplacian)
     mean = round(mean_array[0][0], 2)
     stddev = stddev_array[0][0]
-    if (face_rmouth_x == 0 and face_lmouth_x == 0) : stddev *= MOUTH_DEDUCT
+
+    # If both mouth edge not detected, results deducted.
+    if (faces_count >=1 and face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
+        stddev *= MOUTH_DEDUCT
+
     value = int((stddev * 8) + 0.5)
     if (verbose >= 1) : print(" stddev =", round(stddev, 2), end="")
     if (verbose >= 2) : print(" mean =", mean, end="")
@@ -168,10 +182,13 @@ for face in faces :
         writeflag = True
         box = list(map(int, face[:4]))
         cv2.rectangle(image, box, (255, 0, 0), vlog_line)
-        cv2.putText(image, str(face_trusty), (face_y, face_x), 
+        cv2.putText(image, str(face_trusty), (face_x1, (face_y1 - 8)), 
                     cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0))
+        cv2.circle(image, [face_rmouth_x, face_rmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
+        cv2.circle(image, [face_lmouth_x, face_lmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
 
-    if (verbose >= 1 and faces_count > 0) : print(" score =", face_trusty, end="")
+    if (verbose >= 1 and faces_count >= 1) : 
+        print(" score =", face_trusty, end="")
     # End of loop
     count += 1
     if (value > current_max) : current_max = value
@@ -186,5 +203,5 @@ elif (0 < current_max < MIN_RESULT) :
     current_max = MIN_RESULT
 
 result = current_max
-print("result = ", result)
+print("result =", result)
 sys.exit(result)

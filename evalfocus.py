@@ -7,11 +7,12 @@ import argparse
 import cv2
 import os
 import sys
+import matplotlib.pyplot as plt
 
 # Constants
+LAP_KERNEL = 5
 MIN_RESULT = 5
 MAX_RESULT = 255
-YAML_PATH = "."
 SMALL_LS = 3000
 BIG_LS = 8000
 VISUAL_WAIT = 1500
@@ -55,6 +56,7 @@ ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.")
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
 ap.add_argument("-l", "--log", help = "save image log", action = 'store_true')
+ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true')
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
 ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default = "brisque_range_live.yml")
@@ -70,7 +72,7 @@ brisque_model = os.path.join(script_path, args["brisque_model"])
 brisque_range = os.path.join(script_path, args["brisque_range"])
 
 if (verbose >= 3) : 
-    print("model =", model)
+    print("model =", fd_model)
     print("brisque_model =", brisque_model)
     print("brisque_range =", brisque_range)
 
@@ -158,7 +160,7 @@ for face in faces :
     #Grayscale conversion
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
     #Laplacian conversion
-    laplacian = cv2.Laplacian(gray, cv2.CV_8U)
+    laplacian = cv2.Laplacian(gray, cv2.CV_8U, LAP_KERNEL)
     if (verbose >= 2 and faces_count >= 1) :
         cv2.imshow("crop", laplacian)
         cv2.waitKey(VISUAL_WAIT)
@@ -184,6 +186,13 @@ for face in faces :
                     cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0))
         cv2.circle(image, [face_rmouth_x, face_rmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
         cv2.circle(image, [face_lmouth_x, face_lmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
+    # Show histgram
+    if (args['graph']) :
+        plt.hist(laplacian, range=(0,127))
+        (_, base_name) = os.path.split(image_path)
+        hist_title = str(value) + ' / ' + base_name
+        plt.title(hist_title)
+        plt.show()
 
     if (verbose >= 1 and faces_count >= 1) : 
         print(" score =", face_trusty, end="")

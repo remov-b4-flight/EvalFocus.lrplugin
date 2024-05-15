@@ -7,6 +7,8 @@ import argparse
 import cv2
 import os
 import sys
+import math
+import numpy as np
 import matplotlib.pyplot as plt
 
 # Constants
@@ -17,6 +19,7 @@ SMALL_LS = 3000
 BIG_LS = 8000
 VISUAL_WAIT = 1500
 MOUTH_DEDUCT = 0.75
+FACE_DEDUCT = 0.9
 # FaceDetectorYN result index
 FACE_X = 0; FACE_Y = 1
 FACE_WIDTH = 2 ; FACE_HEIGHT = 3
@@ -165,17 +168,23 @@ for face in faces :
         cv2.imshow("crop", laplacian)
         cv2.waitKey(VISUAL_WAIT)
     # Get result
-    mean_array ,stddev_array = cv2.meanStdDev(laplacian)
-    mean = round(mean_array[0][0], 2)
-    stddev = stddev_array[0][0]
-
+    hist_raw, bins_raw = np.histogram(laplacian, bins = 32, range = (0,255))
+    hist = hist_raw[1:]
+    bins = bins_raw[1:]
+    if (verbose >= 3) :
+        print(hist) ; print(bins)
+    # Compute the power
+    power = 0
+    for i in range(0,len(hist)) :
+        power += hist[i] * math.ceil(bins[i])
+    if (verbose >= 1) : print(" power =", power, end="")
+    
+    # If no faces not detected results deducted.
+    if (faces_count == 0) : power *= FACE_DEDUCT
     # If both mouth edge not detected, results deducted.
     if (faces_count >=1 and face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
-        stddev *= MOUTH_DEDUCT
-
-    value = int((stddev * 8) + 0.5)
-    if (verbose >= 1) : print(" stddev =", round(stddev, 2), end="")
-    if (verbose >= 2) : print(" mean =", mean, end="")
+        power *= MOUTH_DEDUCT
+    power = int(power)
 
     # Report Visualization
     if ( args["log"] ) :
@@ -188,9 +197,9 @@ for face in faces :
         cv2.circle(image, [face_lmouth_x, face_lmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
     # Show histgram
     if (args['graph']) :
-        plt.hist(laplacian, range=(0,127))
         (_, base_name) = os.path.split(image_path)
-        hist_title = str(value) + ' / ' + base_name
+        hist_title = str(power) + ' / ' + base_name
+        plt.stairs(hist, bins, fill = True)
         plt.title(hist_title)
         plt.show()
 
@@ -198,12 +207,14 @@ for face in faces :
         print(" score =", face_trusty, end="")
     # End of loop
     count += 1
-    if (value > current_max) : current_max = value
+    if (power > current_max) : current_max = power
     if (verbose >= 1) : print()
 # End loop of faces
 if (writeflag == True) : write_image(image_path, image)
 
 # Return value to OS
+current_max /= 65536
+current_max = int(current_max)
 if (current_max > MAX_RESULT) :
     current_max = MAX_RESULT
 elif (0 < current_max < MIN_RESULT) : 

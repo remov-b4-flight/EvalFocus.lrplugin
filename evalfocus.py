@@ -177,6 +177,7 @@ for face in faces :
     power = 0
     for i in range(0,len(hist)) :
         power += hist[i] * math.ceil(bins[i])
+
     if (verbose >= 1) : print(" power =", power, end="")
     
     # If no faces not detected results deducted.

@@ -60,16 +60,18 @@ result = 0
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.")
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
-ap.add_argument("-l", "--log", help = "save image log", action = 'store_true')
-ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true')
+ap.add_argument("-l", "--log", help = "save image log", action = 'store_true', default = False)
+ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
 ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default = "brisque_range_live.yml")
-ap.add_argument("-n", "--noresize", help = "no resize", action = 'store_true')
+ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
+ap.add_argument("-sb", "--skip_brisque", help = "skip brisque", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
 
 verbose = args["v"]
+
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
 
@@ -83,6 +85,13 @@ if (verbose >= 3) :
 
 image_path = args["file"]
 
+if (os.path.isfile(fd_model) != True) :
+    sys.exit(ERROR_CANTOPEN)
+if (os.path.isfile(brisque_model) != True) :
+    skip_brisque = True
+if (os.path.isfile(brisque_model) != True) :
+    skip_brisque = True
+
 if (verbose >= 1) : print("input image =", image_path)
 # Read image
 original_image = cv2.imread(image_path)
@@ -90,18 +99,19 @@ if original_image is None :
     print(image_path, " CAN'T READ.")
     sys.exit(ERROR_CANTOPEN)
 
-# BRISQUE evaluation
-brisque_array = cv2.quality.QualityBRISQUE_compute(original_image, brisque_model, brisque_range)
-brisque_score = round(brisque_array[0], 2)
-if (verbose >= 1) : print("BRISQUE score =", brisque_score)
-if (brisque_score > 80.0) :
-    if (verbose >= 2) : print("Evaluate terminated by low BRISQUE score.")
-    sys.exit(MIN_RESULT)
+if (args["skip_brisque"] != True) :
+    # BRISQUE evaluation
+    brisque_array = cv2.quality.QualityBRISQUE_compute(original_image, brisque_model, brisque_range)
+    brisque_score = round(brisque_array[0], 2)
+    if (verbose >= 1) : print("BRISQUE score =", brisque_score)
+    if (brisque_score > 80.0) :
+        if (verbose >= 2) : print("Evaluate terminated by low BRISQUE score.")
+        sys.exit(MIN_RESULT)
 
 orig_height, orig_width, _ = original_image.shape
 long_side = max(orig_height,orig_width)
 resize_long = adjust_long(long_side)
-if (resize_long < 0 or args["noresize"] == True) : # No resize
+if (resize_long < 0 or args["skip_resize"] == True) : # No resize
     image = original_image
 else :
     aspect = orig_width / orig_height
@@ -171,8 +181,8 @@ for face in faces :
         cv2.waitKey(VISUAL_WAIT)
     # Get result
     hist_raw, bins_raw = np.histogram(laplacian, bins = 32, range = (0,255))
-    hist = hist_raw[1:]
-    bins = bins_raw[1:]
+    hist = hist_raw[2:]
+    bins = bins_raw[2:]
     if (verbose >= 3) :
         print(hist) ; print(bins)
     # Compute the power

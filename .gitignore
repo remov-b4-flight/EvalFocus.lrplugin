@@ -1,4 +1,5 @@
 .vscode/
+.DS_Store
 evalfocus.log
 LICENCE
 haar*.xml

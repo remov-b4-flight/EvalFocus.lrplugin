@@ -20,6 +20,8 @@ BIG_LS = 8000
 VISUAL_WAIT = 1500
 MOUTH_DEDUCT = 0.75
 FACE_DEDUCT = 0.9
+# Error code
+ERROR_CANTOPEN = 2
 # FaceDetectorYN result index
 FACE_X = 0; FACE_Y = 1
 FACE_WIDTH = 2 ; FACE_HEIGHT = 3
@@ -86,7 +88,7 @@ if (verbose >= 1) : print("input image =", image_path)
 original_image = cv2.imread(image_path)
 if original_image is None :
     print(image_path, " CAN'T READ.")
-    sys.exit(1)
+    sys.exit(ERROR_CANTOPEN)
 
 # BRISQUE evaluation
 brisque_array = cv2.quality.QualityBRISQUE_compute(original_image, brisque_model, brisque_range)

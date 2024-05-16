@@ -60,7 +60,6 @@ result = 0
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.")
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
-ap.add_argument("-l", "--log", help = "save image log", action = 'store_true', default = False)
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
@@ -68,6 +67,7 @@ ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default =
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
 ap.add_argument("-sb", "--skip_brisque", help = "skip brisque", action = 'store_true', default = False)
 ap.add_argument("-vs", "--visual", help = "visual outputs", action = 'store_true', default = False)
+ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
 
@@ -204,8 +204,8 @@ for face in faces :
     count += 1
 # End loop of faces
 
-# Report Visualization
-if ( args["log"] ) :
+# Make visual report
+if ( args["vlog"] ) :
     vlog_line = int(max(width,height) / 1000)
     if (vlog_line < 3) : vlog_line = 3
     max_face = faces[max_index]

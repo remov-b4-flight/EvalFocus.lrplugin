@@ -12,12 +12,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Constants
-LAP_KERNEL = 5
+LAP_KERNEL = 3
 MIN_RESULT = 5
 MAX_RESULT = 255
 SMALL_LS = 3000
 BIG_LS = 8000
-VISUAL_WAIT = 1500
+VISUAL_WAIT = 2000
 MOUTH_DEDUCT = 0.75
 FACE_DEDUCT = 0.9
 # Error code
@@ -67,6 +67,7 @@ ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default =
 ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default = "brisque_range_live.yml")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
 ap.add_argument("-sb", "--skip_brisque", help = "skip brisque", action = 'store_true', default = False)
+ap.add_argument("-vs", "--visual", help = "visual outputs", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
 
@@ -121,7 +122,7 @@ else :
         target_size = (resize_long, int(resize_long / aspect))
     image = cv2.resize(original_image,target_size, interpolation = cv2.INTER_NEAREST_EXACT)
 
-if (verbose >= 3) :
+if (args["visual"]) :
     cv2.imshow("resize",image)
     cv2.waitKey(VISUAL_WAIT)
 
@@ -147,12 +148,8 @@ faces = faces if faces is not None else [[
     -1
 ]]
 
-vlog_line = int(max(width,height) / 1000)
-if (vlog_line < 3) : vlog_line = 3
-writeflag = False
-
-count = 1 if faces_count >= 1 else 0
-current_max = 0
+count = 0
+max_power = 0
 
 # Loop with detected faces
 for face in faces :
@@ -176,15 +173,14 @@ for face in faces :
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
     #Laplacian conversion
     laplacian = cv2.Laplacian(gray, cv2.CV_8U, LAP_KERNEL)
-    if (verbose >= 2 and faces_count >= 1) :
+    if (args["visual"] and faces_count >= 1) :
         cv2.imshow("crop", laplacian)
         cv2.waitKey(VISUAL_WAIT)
     # Get result
-    hist_raw, bins_raw = np.histogram(laplacian, bins = 32, range = (0,255))
+    hist_raw, bins_raw = np.histogram(laplacian, bins = 64, range = (0,255))
     hist = hist_raw[2:]
     bins = bins_raw[2:]
-    if (verbose >= 3) :
-        print(hist) ; print(bins)
+    if (verbose >= 3) : print(" hist =", hist, end="")
     # Compute the power
     power = 0
     for i in range(0,len(hist)) :
@@ -195,44 +191,48 @@ for face in faces :
     # If no faces not detected results deducted.
     if (faces_count == 0) : power *= FACE_DEDUCT
     # If both mouth edge not detected, results deducted.
-    if (faces_count >=1 and face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
-        power *= MOUTH_DEDUCT
+    elif (face_rmouth_x <= 0 and face_lmouth_x <= 0) : power *= MOUTH_DEDUCT
+
     power = int(power)
 
-    # Report Visualization
-    if ( args["log"] ) :
-        writeflag = True
-        box = list(map(int, face[:4]))
-        cv2.rectangle(image, box, (255, 0, 0), vlog_line)
-        cv2.putText(image, str(face_trusty), (face_x1, (face_y1 - 8)), 
-                    cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0))
-        cv2.circle(image, [face_rmouth_x, face_rmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
-        cv2.circle(image, [face_lmouth_x, face_lmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
-    # Show histgram
-    if (args['graph']) :
-        (_, base_name) = os.path.split(image_path)
-        hist_title = str(power) + ' / ' + base_name
-        plt.stairs(hist, bins, fill = True)
-        plt.title(hist_title)
-        plt.show()
-
-    if (verbose >= 1 and faces_count >= 1) : 
-        print(" score =", face_trusty, end="")
+    if (verbose >= 1 and faces_count >= 1) : print(" score =", face_trusty, end="")
+    if (power > max_power) : 
+        max_power = power
+        max_index = count
+    if (verbose >= 1) : print()
     # End of loop
     count += 1
-    if (power > current_max) : current_max = power
-    if (verbose >= 1) : print()
 # End loop of faces
-if (writeflag == True) : write_image(image_path, image)
+
+# Report Visualization
+if ( args["log"] ) :
+    vlog_line = int(max(width,height) / 1000)
+    if (vlog_line < 3) : vlog_line = 3
+    max_face = faces[max_index]
+    box = list(map(int, max_face[:4]))
+    cv2.rectangle(image, box, (255, 0, 0), vlog_line)
+    cv2.putText(image, str(face_trusty), (face_x1, (face_y1 - 8)), 
+                cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0))
+    cv2.circle(image, [face_rmouth_x, face_rmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
+    cv2.circle(image, [face_lmouth_x, face_lmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
+    write_image(image_path, image)
+
+# Show histgram
+if (args['graph']) :
+    (_, base_name) = os.path.split(image_path)
+    hist_title = str(max_power) + ' / ' + base_name
+    plt.stairs(hist, bins, fill = True)
+    plt.title(hist_title)
+    plt.show()
 
 # Return value to OS
-current_max /= 65536
-current_max = int(current_max)
-if (current_max > MAX_RESULT) :
-    current_max = MAX_RESULT
-elif (0 < current_max < MIN_RESULT) : 
-    current_max = MIN_RESULT
+max_power /= 1024
+max_power = int(max_power)
+if (max_power > MAX_RESULT) :
+    max_power = MAX_RESULT
+elif (0 < max_power < MIN_RESULT) : 
+    max_power = MIN_RESULT
 
-result = current_max
+result = max_power
 print("result =", result)
 sys.exit(result)

@@ -23,14 +23,24 @@ FACE_DEDUCT = 0.9
 # Error code
 ERROR_CANTOPEN = 2
 # FaceDetectorYN result index
-FACE_X = 0; FACE_Y = 1
-FACE_WIDTH = 2 ; FACE_HEIGHT = 3
-FACE_REYE_X = 4 ; FACE_REYE_Y = 5
-FACE_LEYE_X = 6 ; FACE_LEYE_Y = 7
-FACE_NOSE_X = 8 ; FACE_NOSE_Y = 9
-FACE_RMOUTH_X = 10 ; FACE_RMOUTH_Y = 11
-FACE_LMOUTH_X = 12 ; FACE_LMOUTH_Y = 13
-FACE_TRUSTY = 14
+class FACE :
+    X = 0 ; Y = 1
+    WIDTH = 2 ; HEIGHT = 3
+    REYE_X = 4 ; REYE_Y = 5
+    LEYE_X = 6 ; LEYE_Y = 7
+    NOSE_X = 8 ; NOSE_Y = 9
+    RMOUTH_X = 10 ; RMOUTH_Y = 11
+    LMOUTH_X = 12 ; LMOUTH_Y = 13
+    TRUSTY = 14
+
+#FACE_X = 0; FACE_Y = 1
+#FACE_WIDTH = 2 ; FACE_HEIGHT = 3
+#FACE_REYE_X = 4 ; FACE_REYE_Y = 5
+#FACE_LEYE_X = 6 ; FACE_LEYE_Y = 7
+#FACE_NOSE_X = 8 ; FACE_NOSE_Y = 9
+#FACE_RMOUTH_X = 10 ; FACE_RMOUTH_Y = 11
+#FACE_LMOUTH_X = 12 ; FACE_LMOUTH_Y = 13
+#FACE_TRUSTY = 14
 
 # Write vlog image to home
 def write_image(file_path, image, sub_dir="vlog") :
@@ -156,18 +166,18 @@ max_power = 0
 for face in faces :
 
     if (verbose >= 1) : print("area ", count, end="")
-    face_rmouth_x = int(face[FACE_RMOUTH_X])
-    face_rmouth_y = int(face[FACE_RMOUTH_Y])
-    face_lmouth_x = int(face[FACE_LMOUTH_X])
-    face_lmouth_y = int(face[FACE_LMOUTH_Y])
+    face_rmouth_x = int(face[FACE.RMOUTH_X])
+    face_rmouth_y = int(face[FACE.RMOUTH_Y])
+    face_lmouth_x = int(face[FACE.LMOUTH_X])
+    face_lmouth_y = int(face[FACE.LMOUTH_Y])
     if (faces_count >= 1 and verbose >= 2) :
         print(" mouth =", face_rmouth_x, face_lmouth_x, end="")
-    face_trusty = round(face[FACE_TRUSTY], 2) if faces_count >= 1 else 0.0
+    face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
     #Crop face
-    face_x1 = int(face[FACE_X])
-    face_x2 = int(face[FACE_X] + face[FACE_WIDTH])
-    face_y1 = int(face[FACE_Y])
-    face_y2 = int(face[FACE_Y] + face[FACE_HEIGHT])
+    face_x1 = int(face[FACE.X])
+    face_x2 = int(face[FACE.X] + face[FACE.WIDTH])
+    face_y1 = int(face[FACE.Y])
+    face_y2 = int(face[FACE.Y] + face[FACE.HEIGHT])
     face_image = image[ face_y1 : face_y2,
                         face_x1 : face_x2 ]
     #Grayscale conversion
@@ -185,7 +195,7 @@ for face in faces :
     power_length = len(hist)
     power_start = int(power_length - 4)
     for i in range(power_start, power_length) :
-        power += hist[i] * i #* math.ceil(bins[i])
+        power += hist[i] * i
 
     if (verbose >= 1) : print(" power =", power, end="")
     
@@ -205,17 +215,33 @@ for face in faces :
     count += 1
 # End loop of faces
 
+max_face = faces[max_index]
+pixel_count = int(max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] / 1000)
+power_kpixel = math.ceil(max_power / pixel_count)
+if (verbose >= 2) :
+    print("Kpixels =", pixel_count)
+    print("power/Kpixels =", power_kpixel)
+result = power_kpixel
+
 # Make image log
 if ( args["vlog"] ) :
     vlog_line = int(max(width,height) / 1000)
     if (vlog_line < 3) : vlog_line = 3
-    max_face = faces[max_index]
     box = list(map(int, max_face[:4]))
+    max_x = int(max_face[FACE.X])
+    max_y = int(max_face[FACE.Y])
+    max_rmouth_x = int(max_face[FACE.RMOUTH_X])
+    max_rmouth_y = int(max_face[FACE.RMOUTH_Y])
+    max_lmouth_x = int(max_face[FACE.LMOUTH_X])
+    max_lmouth_y = int(max_face[FACE.LMOUTH_Y])
+
     cv2.rectangle(image, box, (255, 0, 0), vlog_line)
-    cv2.putText(image, str(face_trusty), (face_x1, (face_y1 - 8)), 
-                cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0))
-    cv2.circle(image, [face_rmouth_x, face_rmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
-    cv2.circle(image, [face_lmouth_x, face_lmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
+    cv2.putText(image, str(face_trusty), (max_x, (max_y - 8)), 
+                cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0), 3)
+    cv2.putText(image, ("Result:" + str(result)), (32, 64), 
+                cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 192), 6)
+    cv2.circle(image, [max_rmouth_x, max_rmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
+    cv2.circle(image, [max_lmouth_x, max_lmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
     write_image(image_path, image)
 
 # Show histgram
@@ -227,12 +253,10 @@ if (args['graph']) :
     plt.show()
 
 # Return value to OS
-max_power = int(max_power)
-if (max_power > MAX_RESULT) :
-    max_power = MAX_RESULT
-elif (0 < max_power < MIN_RESULT) : 
-    max_power = MIN_RESULT
+if (result > MAX_RESULT) :
+    result = MAX_RESULT
+elif (0 < result < MIN_RESULT) : 
+    result = MIN_RESULT
 
-result = max_power
 print("result =", result)
 sys.exit(result)

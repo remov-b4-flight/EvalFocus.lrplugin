@@ -12,11 +12,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Constants
-LAP_KERNEL = 3
+LAP_KERNEL = 5
 MIN_RESULT = 5
 MAX_RESULT = 255
-SMALL_LS = 3000
-BIG_LS = 8000
+SMALL_LS = 2400
+BIG_LS = 4800
 VISUAL_WAIT = 2000
 MOUTH_DEDUCT = 0.75
 FACE_DEDUCT = 0.9
@@ -45,11 +45,12 @@ def write_image(file_path, image, sub_dir="vlog") :
 
 # get 1/(2^n) long side size for image
 def adjust_long(long_side) :
-    long_result = -1
-    if (long_side >= BIG_LS) :
+    if (BIG_LS < long_side ) :
         long_result = int(long_side / 4)
-    elif (SMALL_LS <= long_side and long_side < BIG_LS) :
+    elif (SMALL_LS < long_side <= BIG_LS) :
         long_result = int(long_side / 2)
+    else :
+        long_result = -1
  
     return long_result
 
@@ -66,7 +67,7 @@ ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default =
 ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default = "brisque_range_live.yml")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
 ap.add_argument("-sb", "--skip_brisque", help = "skip brisque", action = 'store_true', default = False)
-ap.add_argument("-vs", "--visual", help = "visual outputs", action = 'store_true', default = False)
+ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
 ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
@@ -79,7 +80,7 @@ fd_model = os.path.join(script_path, args["model"])
 brisque_model = os.path.join(script_path, args["brisque_model"])
 brisque_range = os.path.join(script_path, args["brisque_range"])
 
-if (verbose >= 3) : 
+if (verbose >= 4) : 
     print("model =", fd_model)
     print("brisque_model =", brisque_model)
     print("brisque_range =", brisque_range)
@@ -122,9 +123,9 @@ else :
         target_size = (resize_long, int(resize_long / aspect))
     image = cv2.resize(original_image,target_size, interpolation = cv2.INTER_NEAREST_EXACT)
 
-if (args["visual"]) :
-    cv2.imshow("resize",image)
-    cv2.waitKey(VISUAL_WAIT)
+#if (args["visual"]) :
+#    cv2.imshow("resize",image)
+#    cv2.waitKey(VISUAL_WAIT)
 
 if (verbose >= 2) : print("shape =", image.shape)
 
@@ -173,18 +174,18 @@ for face in faces :
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
     #Laplacian conversion
     laplacian = cv2.Laplacian(gray, cv2.CV_8U, LAP_KERNEL)
-    if (args["visual"] and faces_count >= 1) :
+    if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
         cv2.imshow("crop", laplacian)
         cv2.waitKey(VISUAL_WAIT)
     # Get result
-    hist_raw, bins_raw = np.histogram(laplacian, bins = 64, range = (0,255))
-    hist = hist_raw[2:]
-    bins = bins_raw[2:]
+    hist, bins = np.histogram(laplacian, bins = 32, range = (0,255))
     if (verbose >= 3) : print(" hist =", hist, end="")
     # Compute the power
     power = 0
-    for i in range(0,len(hist)) :
-        power += hist[i] * math.ceil(bins[i])
+    power_length = len(hist)
+    power_start = int(power_length - 4)
+    for i in range(power_start, power_length) :
+        power += hist[i] * i #* math.ceil(bins[i])
 
     if (verbose >= 1) : print(" power =", power, end="")
     
@@ -204,7 +205,7 @@ for face in faces :
     count += 1
 # End loop of faces
 
-# Make visual report
+# Make image log
 if ( args["vlog"] ) :
     vlog_line = int(max(width,height) / 1000)
     if (vlog_line < 3) : vlog_line = 3
@@ -226,7 +227,6 @@ if (args['graph']) :
     plt.show()
 
 # Return value to OS
-max_power /= 1024
 max_power = int(max_power)
 if (max_power > MAX_RESULT) :
     max_power = MAX_RESULT

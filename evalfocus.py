@@ -4,7 +4,7 @@
 # @author remov_b4_flight
 
 import argparse
-import cv2
+import cv2 as cv
 import os
 import sys
 import math
@@ -17,9 +17,10 @@ MAX_RESULT = 255
 SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
-POWER_RANGE = 8
+POWER_RANGE = 6
 MOUTH_DEDUCT = 0.75
 FACE_DEDUCT = 0.9
+LAP_DDEPTH = cv.CV_32F
 # Error code
 ERROR_CANTOPEN = 2
 # FaceDetectorYN result index
@@ -42,7 +43,7 @@ def write_image(file_path, image, sub_dir="vlog") :
 
     export_file_path = os.path.join(report_dir,file_name)
 
-    cv2.imwrite(export_file_path, image)
+    cv.imwrite(export_file_path, image)
 
 # get 1/(2^n) long side size for image
 def adjust_long(long_side) :
@@ -60,9 +61,10 @@ result = 0
 
 # Option parse
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
-ap.add_argument("file", help = "Image file to process.")
+ap.add_argument("file", help = "Image file to process.",)
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
 ap.add_argument("-k", help = "laplacian kernel", type = int, default = 5)
+ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8,32], default = 8)
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
@@ -76,6 +78,7 @@ args = vars(ap.parse_args())
 
 verbose = args["v"]
 lap_kernel = args["k"]
+lap_ddepth = cv.CV_32F if args["d"] == 32 else cv.CV_8U
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
@@ -100,14 +103,14 @@ if (os.path.isfile(brisque_model) != True) :
 if (verbose >= 1) : 
     print("input image =", image_path)
 # Read image
-original_image = cv2.imread(image_path)
+original_image = cv.imread(image_path)
 if original_image is None :
     print(image_path, " CAN'T READ.")
     sys.exit(ERROR_CANTOPEN)
 
 if (args["skip_brisque"] != True) :
     # BRISQUE evaluation
-    brisque_array = cv2.quality.QualityBRISQUE_compute(original_image, brisque_model, brisque_range)
+    brisque_array = cv.quality.QualityBRISQUE_compute(original_image, brisque_model, brisque_range)
     brisque_score = round(brisque_array[0], 2)
     if (verbose >= 1) : print("BRISQUE score =", brisque_score)
     if (brisque_score > 80.0) :
@@ -126,13 +129,13 @@ else :
         target_size = (int(resize_long * aspect), resize_long)
     else : #landscape
         target_size = (resize_long, int(resize_long / aspect))
-    image = cv2.resize(original_image,target_size, interpolation = cv2.INTER_NEAREST_EXACT)
+    image = cv.resize(original_image,target_size, interpolation = cv.INTER_NEAREST_EXACT)
 
 if (verbose >= 2) : 
     print("shape =", image.shape)
 
 # Detect faces
-fd = cv2.FaceDetectorYN_create(fd_model, "", (0,0))
+fd = cv.FaceDetectorYN_create(fd_model, "", (0,0))
 height, width, _ = image.shape
 fd.setInputSize((width, height))
 _, faces = fd.detect(image)
@@ -162,26 +165,24 @@ for face in faces :
     if (verbose >= 1) : 
         print("area", count, end=": ")
     face_rmouth_x = int(face[FACE.RMOUTH_X])
-#   face_rmouth_y = int(face[FACE.RMOUTH_Y])
     face_lmouth_x = int(face[FACE.LMOUTH_X])
-#   face_lmouth_y = int(face[FACE.LMOUTH_Y])
     if (faces_count >= 1 and verbose >= 2) :
         print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
     face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
-    #Crop face
+    # Crop face
     face_x1 = int(face[FACE.X])
     face_x2 = int(face[FACE.X] + face[FACE.WIDTH])
     face_y1 = int(face[FACE.Y])
     face_y2 = int(face[FACE.Y] + face[FACE.HEIGHT])
     face_image = image[face_y1 : face_y2,
                         face_x1 : face_x2]
-    #Grayscale conversion
-    gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
-    #Laplacian conversion
-    laplacian = cv2.Laplacian(gray, cv2.CV_8U, lap_kernel)
+    # Grayscale conversion
+    gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
+    # Laplacian conversion
+    laplacian = cv.Laplacian(gray, lap_ddepth, lap_kernel)
     if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
-        cv2.imshow("crop", laplacian)
-        cv2.waitKey(VISUAL_WAIT)
+        cv.imshow("crop", laplacian)
+        cv.waitKey(VISUAL_WAIT)
     # Get result
     hist, bins = np.histogram(laplacian, bins = 32, range = (0,255))
     # Compute the power
@@ -234,13 +235,13 @@ if (args["vlog"]) :
     max_lmouth_x = int(max_face[FACE.LMOUTH_X])
     max_lmouth_y = int(max_face[FACE.LMOUTH_Y])
 
-    cv2.rectangle(image, box, (255, 0, 0), vlog_line)
-    cv2.putText(image, str(face_trusty), (max_x, (max_y - 8)), 
-                cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0), 3)
-    cv2.putText(image, ("Result=" + str(result)), (32, 64), 
-                cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 192), 6)
-    cv2.circle(image, [max_rmouth_x, max_rmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
-    cv2.circle(image, [max_lmouth_x, max_lmouth_y], 5, (255,0,255), -1, cv2.LINE_AA)
+    cv.rectangle(image, box, (255, 0, 0), vlog_line)
+    cv.putText(image, str(face_trusty), (max_x, (max_y - 8)), 
+                cv.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0), 3)
+    cv.putText(image, ("Result=" + str(result)), (32, 64), 
+                cv.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 192), 6)
+    cv.circle(image, [max_rmouth_x, max_rmouth_y], 5, (255,0,255), -1, cv.LINE_AA)
+    cv.circle(image, [max_lmouth_x, max_lmouth_y], 5, (255,0,255), -1, cv.LINE_AA)
     write_image(image_path, image)
 
 # Show histgram

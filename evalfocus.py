@@ -171,15 +171,15 @@ for face in faces :
     face_lmouth_x = int(face[FACE.LMOUTH_X])
     face_lmouth_y = int(face[FACE.LMOUTH_Y])
     if (faces_count >= 1 and verbose >= 2) :
-        print(" mouth =({0},{1})".format(face_rmouth_x, face_lmouth_x))
+        print("\tmouth =({0},{1})".format(face_rmouth_x, face_lmouth_x))
     face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
     #Crop face
     face_x1 = int(face[FACE.X])
     face_x2 = int(face[FACE.X] + face[FACE.WIDTH])
     face_y1 = int(face[FACE.Y])
     face_y2 = int(face[FACE.Y] + face[FACE.HEIGHT])
-    face_image = image[ face_y1 : face_y2,
-                        face_x1 : face_x2 ]
+    face_image = image[face_y1 : face_y2,
+                        face_x1 : face_x2]
     #Grayscale conversion
     gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
     #Laplacian conversion
@@ -189,7 +189,7 @@ for face in faces :
         cv2.waitKey(VISUAL_WAIT)
     # Get result
     hist, bins = np.histogram(laplacian, bins = 32, range = (0,255))
-    if (verbose >= 3) : print(" hist =", hist)
+    if (verbose >= 3) : print("\thist =", hist)
     # Compute the power
     power = 0
     power_length = len(hist)
@@ -197,7 +197,7 @@ for face in faces :
     for i in range(power_start, power_length) :
         power += hist[i] * i
 
-    if (verbose >= 1) : print(" power =", power)
+    if (verbose >= 1) : print("\tpower =", power)
     
     # If no faces not detected results deducted.
     if (faces_count == 0) : power *= FACE_DEDUCT
@@ -206,7 +206,7 @@ for face in faces :
 
     power = int(power)
 
-    if (verbose >= 1 and faces_count >= 1) : print(" score =", face_trusty, end="")
+    if (verbose >= 1 and faces_count >= 1) : print("\tscore =", face_trusty)
     if (power > max_power) : 
         max_power = power
         max_index = count
@@ -224,7 +224,7 @@ if (verbose >= 2) :
 result = power_kpixel
 
 # Make image log
-if ( args["vlog"] ) :
+if (args["vlog"]) :
     vlog_line = int(max(width,height) / 1000)
     if (vlog_line < 3) : vlog_line = 3
     box = list(map(int, max_face[:4]))

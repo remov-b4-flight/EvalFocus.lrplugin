@@ -165,13 +165,13 @@ max_power = 0
 # Loop with detected faces
 for face in faces :
 
-    if (verbose >= 1) : print("area ", count, end="")
+    if (verbose >= 1) : print("area ", count)
     face_rmouth_x = int(face[FACE.RMOUTH_X])
     face_rmouth_y = int(face[FACE.RMOUTH_Y])
     face_lmouth_x = int(face[FACE.LMOUTH_X])
     face_lmouth_y = int(face[FACE.LMOUTH_Y])
     if (faces_count >= 1 and verbose >= 2) :
-        print(" mouth =", face_rmouth_x, face_lmouth_x, end="")
+        print(" mouth =({0},{1})".format(face_rmouth_x, face_lmouth_x))
     face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
     #Crop face
     face_x1 = int(face[FACE.X])
@@ -189,7 +189,7 @@ for face in faces :
         cv2.waitKey(VISUAL_WAIT)
     # Get result
     hist, bins = np.histogram(laplacian, bins = 32, range = (0,255))
-    if (verbose >= 3) : print(" hist =", hist, end="")
+    if (verbose >= 3) : print(" hist =", hist)
     # Compute the power
     power = 0
     power_length = len(hist)
@@ -197,7 +197,7 @@ for face in faces :
     for i in range(power_start, power_length) :
         power += hist[i] * i
 
-    if (verbose >= 1) : print(" power =", power, end="")
+    if (verbose >= 1) : print(" power =", power)
     
     # If no faces not detected results deducted.
     if (faces_count == 0) : power *= FACE_DEDUCT

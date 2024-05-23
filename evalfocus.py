@@ -20,7 +20,6 @@ VISUAL_WAIT = 2000
 POWER_RANGE = 6
 MOUTH_DEDUCT = 0.75
 FACE_DEDUCT = 0.9
-LAP_DDEPTH = cv.CV_32F
 # Error code
 ERROR_CANTOPEN = 2
 # FaceDetectorYN result index
@@ -65,8 +64,8 @@ result = 0
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.",)
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
-ap.add_argument("-k", help = "laplacian kernel", type = int, default = 5)
-ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8,32], default = 8)
+ap.add_argument("-k", help = "laplacian kernel", type = int, choices = [1,3,5,7,9], default = 5)
+ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8,16,32], default = 8)
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
@@ -77,10 +76,16 @@ ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_
 ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
-
+# Additional parameter parse
 verbose = args["v"]
 lap_kernel = args["k"]
-lap_ddepth = cv.CV_32F if args["d"] == 32 else cv.CV_8U
+match args["d"] :
+    case 32 :
+        lap_ddepth = cv.CV_32F
+    case 16 :
+        lap_ddepth = cv.CV_16U
+    case _ :
+        lap_ddepth = cv.CV_8U
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
@@ -95,6 +100,7 @@ if (verbose >= 4) :
 
 image_path = args["file"]
 
+# Model files exist check
 if (os.path.isfile(fd_model) != True) :
     sys.exit(ERROR_CANTOPEN)
 if (os.path.isfile(brisque_model) != True) :
@@ -119,17 +125,17 @@ if (args["skip_brisque"] != True) :
         if (verbose >= 2) : 
             print("Evaluate terminated by low BRISQUE score.")
         sys.exit(MIN_RESULT)
-
+# Image resizing fot face detect.
 orig_height, orig_width, _ = original_image.shape
 long_side = max(orig_height,orig_width)
 factor = get_resize_factor(long_side)
-print("factor=", factor)
+print("resize factor=", factor)
 image = cv.resize(original_image, None, fx=factor, fy=factor, interpolation=cv.INTER_NEAREST_EXACT)
 
 if (verbose >= 2) : 
     print("shape =", image.shape)
 
-# Detect faces
+# Detecting faces.
 fd = cv.FaceDetectorYN_create(fd_model, "", (0,0))
 height, width, _ = image.shape
 fd.setInputSize((width, height))
@@ -147,7 +153,7 @@ faces = faces if faces is not None else [[
     0, 0,   # nose (x,y)
     -1, -1,   # right mouth edge (x,y)
     -1, -1,   # left mouth edge (x,y)
-    -1
+    1       # trusty
 ]]
 
 count = 0
@@ -212,31 +218,35 @@ for face in faces :
 
 max_face = faces[max_index]
 pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // 10000
-power_kpixel = math.ceil(max_power / pixel_count)
+power_kpixel = max_power / pixel_count
 if (verbose >= 2) :
     print("10Kpixels=", pixel_count)
     print("power/10Kpixels=", power_kpixel)
-result = power_kpixel
+result = math.ceil(power_kpixel)
 
 # Make image log
 if (args["vlog"]) :
-    vlog_line = max(width,height) // 1000
-    if (vlog_line < 3) : vlog_line = 3
-    box = list(map(int, max_face[:4]))
-    max_x = int(max_face[FACE.X])
-    max_y = int(max_face[FACE.Y])
-    max_rmouth_x = int(max_face[FACE.RMOUTH_X])
-    max_rmouth_y = int(max_face[FACE.RMOUTH_Y])
-    max_lmouth_x = int(max_face[FACE.LMOUTH_X])
-    max_lmouth_y = int(max_face[FACE.LMOUTH_Y])
+    # Draw result for face has max power
+    if(faces_count >= 1) :
+        vlog_line = max(width,height) // 1000
+        if (vlog_line < 3) : vlog_line = 3
 
-    cv.rectangle(image, box, COLOR.BLUE, vlog_line)
-    cv.putText(image, str(face_trusty), (max_x, (max_y - 8)), 
-                cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 3)
+        box = list(map(int, max_face[:4]))
+        max_x = int(max_face[FACE.X])
+        max_y = int(max_face[FACE.Y])
+        max_rmouth_x = int(max_face[FACE.RMOUTH_X])
+        max_rmouth_y = int(max_face[FACE.RMOUTH_Y])
+        max_lmouth_x = int(max_face[FACE.LMOUTH_X])
+        max_lmouth_y = int(max_face[FACE.LMOUTH_Y])
+
+        cv.rectangle(image, box, COLOR.BLUE, vlog_line)
+        cv.putText(image, str(face_trusty), (max_x, (max_y - 8)), 
+                    cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 3)
+        cv.circle(image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
+        cv.circle(image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
+    # Draw total result
     cv.putText(image, ("Result=" + str(result)), (32, 64), 
                 cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
-    cv.circle(image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
-    cv.circle(image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
     write_image(image_path, image)
 
 # Show histgram

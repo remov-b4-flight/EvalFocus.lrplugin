@@ -48,9 +48,9 @@ def write_image(file_path, image, sub_dir="vlog") :
 # get 1/(2^n) long side size for image
 def adjust_long(long_side) :
     if (BIG_LS < long_side ) :
-        long_result = int(long_side / 4)
+        long_result = long_side // 4
     elif (SMALL_LS < long_side <= BIG_LS) :
-        long_result = int(long_side / 2)
+        long_result = long_side // 2
     else :
         long_result = -1
  
@@ -216,7 +216,7 @@ for face in faces :
 # End loop of faces
 
 max_face = faces[max_index]
-pixel_count = int(max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] / 10000)
+pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // 10000
 power_kpixel = math.ceil(max_power / pixel_count)
 if (verbose >= 2) :
     print("10Kpixels=", pixel_count)
@@ -225,7 +225,7 @@ result = power_kpixel
 
 # Make image log
 if (args["vlog"]) :
-    vlog_line = int(max(width,height) / 1000)
+    vlog_line = max(width,height) // 1000
     if (vlog_line < 3) : vlog_line = 3
     box = list(map(int, max_face[:4]))
     max_x = int(max_face[FACE.X])

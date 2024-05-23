@@ -34,6 +34,11 @@ class FACE :
     LMOUTH_X = 12 ; LMOUTH_Y = 13
     TRUSTY = 14
 
+class COLOR :
+    RED = (0, 0, 255) ; BLUE = (255, 0, 0) ; GREEN = (0, 255, 0)
+    MAGENTA = (255, 0, 255) ; CYAN = (255, 255, 0) ; YELLOW = (0, 255, 255)
+    WHITE = (255, 255, 255)
+
 # Write vlog image to home
 def write_image(file_path, image, sub_dir="vlog") :
     homedir = os.environ['HOME']
@@ -45,16 +50,13 @@ def write_image(file_path, image, sub_dir="vlog") :
 
     cv.imwrite(export_file_path, image)
 
-# get 1/(2^n) long side size for image
-def adjust_long(long_side) :
+def get_resize_factor(long_side) :
     if (BIG_LS < long_side ) :
-        long_result = long_side // 4
+        return (1/4)
     elif (SMALL_LS < long_side <= BIG_LS) :
-        long_result = long_side // 2
+        return (1/2)
     else :
-        long_result = -1
- 
-    return long_result
+        return 1
 
 # Main
 result = 0
@@ -120,16 +122,9 @@ if (args["skip_brisque"] != True) :
 
 orig_height, orig_width, _ = original_image.shape
 long_side = max(orig_height,orig_width)
-resize_long = adjust_long(long_side)
-if (resize_long < 0 or args["skip_resize"] == True) : # No resize
-    image = original_image
-else :
-    aspect = orig_width / orig_height
-    if (orig_height >= orig_width) : #portlait
-        target_size = (int(resize_long * aspect), resize_long)
-    else : #landscape
-        target_size = (resize_long, int(resize_long / aspect))
-    image = cv.resize(original_image,target_size, interpolation = cv.INTER_NEAREST_EXACT)
+factor = get_resize_factor(long_side)
+print("factor=", factor)
+image = cv.resize(original_image, None, fx=factor, fy=factor, interpolation=cv.INTER_NEAREST_EXACT)
 
 if (verbose >= 2) : 
     print("shape =", image.shape)
@@ -235,13 +230,13 @@ if (args["vlog"]) :
     max_lmouth_x = int(max_face[FACE.LMOUTH_X])
     max_lmouth_y = int(max_face[FACE.LMOUTH_Y])
 
-    cv.rectangle(image, box, (255, 0, 0), vlog_line)
+    cv.rectangle(image, box, COLOR.BLUE, vlog_line)
     cv.putText(image, str(face_trusty), (max_x, (max_y - 8)), 
-                cv.FONT_HERSHEY_DUPLEX, 0.8, (255,255,0), 3)
+                cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 3)
     cv.putText(image, ("Result=" + str(result)), (32, 64), 
-                cv.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 192), 6)
-    cv.circle(image, [max_rmouth_x, max_rmouth_y], 5, (255,0,255), -1, cv.LINE_AA)
-    cv.circle(image, [max_lmouth_x, max_lmouth_y], 5, (255,0,255), -1, cv.LINE_AA)
+                cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
+    cv.circle(image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
+    cv.circle(image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
     write_image(image_path, image)
 
 # Show histgram

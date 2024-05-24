@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 # Constants
 MIN_RESULT = 5
-MAX_RESULT = 255
+MAX_RESULT = 65535
 SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
@@ -260,7 +260,7 @@ if (args['graph']) :
 # Return value to OS
 if (result > MAX_RESULT) :
     result = MAX_RESULT
-elif (0 < result < MIN_RESULT) : 
+elif (0 <= result < MIN_RESULT) : 
     result = MIN_RESULT
 
 print("result=", result)

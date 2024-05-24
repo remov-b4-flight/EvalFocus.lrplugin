@@ -41,16 +41,18 @@ LrTasks.startAsyncTask( function ()
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 			local FilePath = PhotoIt:getRawMetadata('path')
 			local CommandLine = python .. script_path .. FilePath  
-			Logger:debug(FilePath)
-			local value = LrTasks.execute(CommandLine) / 256
-			Logger:debug('value = ' .. value)
+			Logger:info(FilePath)
+			local r = LrTasks.execute(CommandLine)
+			local value = r / 256
+			Logger:info('return=' .. r .. ' value=' .. value)
 			if (MINRESULT <= value) then
-
 				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
 				if (prefs.AutoReject == true  and value < prefs.RejectRange) then
-					Logger:debug('rejected by value.')
+					Logger:info('rejected by value.')
 					PhotoIt:setRawMetadata('pickStatus', -1)
 				end
+			else
+				Logger:error('retern indicates some error.')
 			end
 			ProgressBar:setPortionComplete(i, countPhotos)
 		end --end of for photos loop

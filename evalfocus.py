@@ -45,7 +45,7 @@ def write_image(file_path, image, sub_dir="vlog") :
     report_dir = os.path.join(homedir, sub_dir)
     os.makedirs(report_dir, exist_ok=True)
 
-    export_file_path = os.path.join(report_dir,file_name)
+    export_file_path = os.path.join(report_dir, file_name)
 
     cv.imwrite(export_file_path, image)
 
@@ -125,11 +125,13 @@ if (args["skip_brisque"] != True) :
         if (verbose >= 2) : 
             print("Evaluate terminated by low BRISQUE score.")
         sys.exit(MIN_RESULT)
+
 # Image resizing fot face detect.
 orig_height, orig_width, _ = original_image.shape
 long_side = max(orig_height,orig_width)
 factor = get_resize_factor(long_side)
-print("resize factor=", factor)
+if (verbose >= 1) : 
+    print("resize factor=", factor)
 image = cv.resize(original_image, None, fx=factor, fy=factor, interpolation=cv.INTER_NEAREST_EXACT)
 
 if (verbose >= 2) : 
@@ -196,7 +198,7 @@ for face in faces :
         power += hist[i] * i
 
     if (verbose >= 1) : 
-        print("power=", power,end=", ")
+        print("power=", power, end=", ")
     
     # If no faces not detected results deducted.
     if (faces_count == 0) : 

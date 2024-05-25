@@ -223,7 +223,7 @@ pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // 10000
 power_kpixel = max_power / pixel_count
 if (verbose >= 2) :
     print("10Kpixels=", pixel_count)
-    print("power/10Kpixels=", power_kpixel)
+    print("power/10Kpixels={0:.2f}".format(power_kpixel))
 result = math.ceil(power_kpixel)
 
 # Make image log

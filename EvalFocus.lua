@@ -39,21 +39,25 @@ LrTasks.startAsyncTask( function ()
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
 		Logger:debug('-loop-')
 		for i,PhotoIt in ipairs(SelectedPhotos) do
-			local FilePath = PhotoIt:getRawMetadata('path')
-			local CommandLine = python .. script_path .. FilePath  
-			Logger:info(FilePath)
-			local r = LrTasks.execute(CommandLine)
-			local value = r / 256
-			Logger:info('return=' .. r .. ' value=' .. value)
-			if (MINRESULT <= value) then
-				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
-				if (prefs.AutoReject == true  and value < prefs.RejectRange) then
-					Logger:info('rejected by value.')
-					PhotoIt:setRawMetadata('pickStatus', -1)
+			if (PhotoIt:getRawMetadata('fileFormat') == 'JPG') then 
+				local FilePath = PhotoIt:getRawMetadata('path')
+				local CommandLine = python .. script_path .. FilePath  
+				Logger:info(FilePath)
+				local r = LrTasks.execute(CommandLine)
+				local value = r / 256
+				Logger:info('return=' .. r .. ' value=' .. value)
+				if (MINRESULT <= value) then
+					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
+					if (prefs.AutoReject == true  and value < prefs.RejectRange) then
+						Logger:info('rejected by value.')
+						PhotoIt:setRawMetadata('pickStatus', -1)
+					end
+				else
+					Logger:error('retern indicates some error.')
 				end
 			else
-				Logger:error('retern indicates some error.')
-			end
+				Logger:info('skip non JPEG file.')
+			end --isVidep
 			ProgressBar:setPortionComplete(i, countPhotos)
 		end --end of for photos loop
 		ProgressBar:done()

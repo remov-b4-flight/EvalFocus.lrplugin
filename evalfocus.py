@@ -12,8 +12,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Constants
-MIN_RESULT = 5
-MAX_RESULT = 65535
+MIN_RESULT = 6
+MAX_RESULT = 255
+LOW_BRISQUE = 80.0
 SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
@@ -22,6 +23,7 @@ MOUTH_DEDUCT = 0.75
 FACE_DEDUCT = 0.9
 # Error code
 ERROR_CANTOPEN = 2
+ERROR_LOW_BRISQUE = 5
 # FaceDetectorYN result index
 class FACE :
     X = 0 ; Y = 1
@@ -43,7 +45,7 @@ def write_image(file_path, image, sub_dir="vlog") :
     homedir = os.environ['HOME']
     (_, file_name) = os.path.split(file_path)
     report_dir = os.path.join(homedir, sub_dir)
-    os.makedirs(report_dir, exist_ok=True)
+    os.makedirs(report_dir, exist_ok = True)
 
     export_file_path = os.path.join(report_dir, file_name)
 
@@ -121,10 +123,10 @@ if (args["skip_brisque"] != True) :
     brisque_array = cv.quality.QualityBRISQUE_compute(original_image, brisque_model, brisque_range)
     brisque_score = round(brisque_array[0], 2)
     if (verbose >= 1) : print("BRISQUE score =", brisque_score)
-    if (brisque_score > 80.0) :
+    if (brisque_score > LOW_BRISQUE) :
         if (verbose >= 2) : 
             print("Evaluate terminated by low BRISQUE score.")
-        sys.exit(MIN_RESULT)
+        sys.exit(ERROR_LOW_BRISQUE)
 
 # Image resizing fot face detect.
 orig_height, orig_width, _ = original_image.shape

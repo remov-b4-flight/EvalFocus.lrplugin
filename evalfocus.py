@@ -212,8 +212,10 @@ for face in faces :
         power *= FACE_DEDUCT
     # If both mouth edge not detected, results deducted.
     else :
-        if (face_rmouth_x <= 0 and face_lmouth_x <= 0) : power *= MOUTH_DEDUCT
-        elif (face_reye_x <= 0 and face_leye_x <= 0) : power *= EYE_DEDUCT
+        if (face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
+            power *= MOUTH_DEDUCT
+        if (face_reye_x <= 0 and face_leye_x <= 0) : 
+            power *= EYE_DEDUCT
 
     power = int(power)
 

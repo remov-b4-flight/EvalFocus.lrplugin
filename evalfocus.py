@@ -20,6 +20,7 @@ BIG_LS = 4800
 VISUAL_WAIT = 2000
 POWER_RANGE = 6
 MOUTH_DEDUCT = 0.75
+EYE_DEDUCT = 0.85
 FACE_DEDUCT = 0.9
 # Error code
 ERROR_CANTOPEN = 2
@@ -173,6 +174,10 @@ for face in faces :
     face_lmouth_x = int(face[FACE.LMOUTH_X])
     if (faces_count >= 1 and verbose >= 2) :
         print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
+    face_leye_x = int(face[FACE.LEYE_X])
+    face_reye_x = int(face[FACE.REYE_X])
+    if (faces_count >= 1 and verbose >= 2) :
+        print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
     face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
     # Crop face
     face_x1 = int(face[FACE.X])
@@ -206,7 +211,9 @@ for face in faces :
     if (faces_count == 0) : 
         power *= FACE_DEDUCT
     # If both mouth edge not detected, results deducted.
-    elif (face_rmouth_x <= 0 and face_lmouth_x <= 0) : power *= MOUTH_DEDUCT
+    else :
+        if (face_rmouth_x <= 0 and face_lmouth_x <= 0) : power *= MOUTH_DEDUCT
+        elif (face_reye_x <= 0 and face_leye_x <= 0) : power *= EYE_DEDUCT
 
     power = int(power)
 

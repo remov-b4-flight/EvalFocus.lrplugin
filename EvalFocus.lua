@@ -38,7 +38,7 @@ LrTasks.startAsyncTask( function ()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
-		Logger:debug('-loop-')
+--		Logger:debug('-loop-')
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 			if (PhotoIt:getRawMetadata('fileFormat') == 'JPG') then 
 				local FilePath = PhotoIt:getRawMetadata('path')
@@ -46,7 +46,7 @@ LrTasks.startAsyncTask( function ()
 				Logger:info(FilePath)
 				local r = LrTasks.execute(CommandLine)
 				local value = r / 256
-				Logger:info('return=' .. r .. ' value=' .. value)
+				Logger:info('value=' .. value)
 				if (MINRESULT <= value) then
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
 					if (prefs.AutoReject == true  and value < prefs.RejectRange) then
@@ -67,6 +67,6 @@ LrTasks.startAsyncTask( function ()
 		end --end of for photos loop
 		ProgressBar:done()
 	end ) --end of withWriteAccessDo
-Logger:debug('-end-')
+--Logger:debug('-end-')
 end ) --end of startAsyncTask function()
 return

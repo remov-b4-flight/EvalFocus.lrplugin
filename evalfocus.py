@@ -74,7 +74,7 @@ ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
 ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default = "brisque_range_live.yml")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
-ap.add_argument("-sb", "--skip_brisque", help = "skip brisque", action = 'store_true', default = False)
+ap.add_argument("-sb", "--skip_brisque", help = "skip brisque", action = 'store_true', default = True)
 ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
 ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
 

@@ -43,25 +43,25 @@ LrTasks.startAsyncTask( function ()
 			if (PhotoIt:getRawMetadata('fileFormat') == 'JPG') then 
 				local FilePath = PhotoIt:getRawMetadata('path')
 				local CommandLine = python .. script_path .. FilePath  
-				Logger:info(FilePath)
+--				Logger:info(FilePath)
 				local r = LrTasks.execute(CommandLine)
 				local value = r / 256
 				Logger:info('value=' .. value)
 				if (MINRESULT <= value) then
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
 					if (prefs.AutoReject == true  and value < prefs.RejectRange) then
-						if (value == LOW_BRISQUE) then
-							Logger:warn('rejected by low BRISQUE.')
-						else
-							Logger:warn('rejected by value.')
-						end
+--						if (value == LOW_BRISQUE) then
+--							Logger:warn('rejected by low BRISQUE.')
+--						else
+--							Logger:warn('rejected by value.')
+--						end
 						PhotoIt:setRawMetadata('pickStatus', -1)
 					end
 				else
-					Logger:error('retern indicates some error.')
+--					Logger:error('retern indicates some error.')
 				end
 			else
-				Logger:info('skip non JPEG file.')
+--				Logger:info('skip non JPEG file.')
 			end --isVidep
 			ProgressBar:setPortionComplete(i, countPhotos)
 		end --end of for photos loop

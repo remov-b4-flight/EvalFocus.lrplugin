@@ -9,6 +9,7 @@ local LrApplication = import 'LrApplication'
 local LrLogger = import 'LrLogger'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
+local LrSelection = import 'LrSelection'
 local Logger = LrLogger(PluginTitle)
 local prefs = import 'LrPrefs'.prefsForPlugin()
 
@@ -38,7 +39,6 @@ LrTasks.startAsyncTask( function ()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
---		Logger:debug('-loop-')
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 			if (PhotoIt:getRawMetadata('fileFormat') == 'JPG') then 
 				local FilePath = PhotoIt:getRawMetadata('path')
@@ -67,6 +67,6 @@ LrTasks.startAsyncTask( function ()
 		end --end of for photos loop
 		ProgressBar:done()
 	end ) --end of withWriteAccessDo
---Logger:debug('-end-')
+	LrSelection.selectNone()
 end ) --end of startAsyncTask function()
 return

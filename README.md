@@ -7,6 +7,7 @@ Mainly developed for Mac envisonment. I have no Windows Lightroom environment.
 * Lightroom
 * homebrew
 * OpenCV
+* numpy
 * pip modules opcncv-python / opencv-pyton-contrib
 ## install
 * install Evalfocus.lrdevplugin as normal lightroom plugin

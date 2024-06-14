@@ -6,14 +6,14 @@ EvalFocus.lrdevplugin
 
 local PluginTitle = 'EvalFocus'
 local LrApplication = import 'LrApplication'
-local LrLogger = import 'LrLogger'
+--local LrLogger = import 'LrLogger'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
 local LrSelection = import 'LrSelection'
-local Logger = LrLogger(PluginTitle)
+--local Logger = LrLogger(PluginTitle)
 local prefs = import 'LrPrefs'.prefsForPlugin()
 
-Logger:enable('logfile')
+--Logger:enable('logfile')
 
 local MINRESULT = 5
 local LOW_BRISQUE = 4
@@ -46,7 +46,7 @@ LrTasks.startAsyncTask( function ()
 --				Logger:info(FilePath)
 				local r = LrTasks.execute(CommandLine)
 				local value = r / 256
-				Logger:info('value=' .. value)
+--				Logger:info('value=' .. value)
 				if (MINRESULT <= value) then
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
 					if (prefs.AutoReject == true  and value < prefs.RejectRange) then

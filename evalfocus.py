@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 # Constants
 MIN_RESULT = 6
 MAX_RESULT = 255
-LOW_BRISQUE = 80.0
 SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
@@ -24,7 +23,6 @@ EYE_DEDUCT = 0.85
 FACE_DEDUCT = 0.9
 # Error code
 ERROR_CANTOPEN = 2
-ERROR_LOW_BRISQUE = 5
 # FaceDetectorYN result index
 class FACE :
     X = 0 ; Y = 1
@@ -71,10 +69,7 @@ ap.add_argument("-k", help = "laplacian kernel", type = int, choices = [1,3,5,7,
 ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8,16,32], default = 8)
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
-ap.add_argument("-bm", "--brisque_model", help = "BRISQUE model file", default = "brisque_model_live.yml")
-ap.add_argument("-br", "--brisque_range", help = "BRISQUE range file", default = "brisque_range_live.yml")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
-ap.add_argument("-sb", "--skip_brisque", help = "skip brisque", action = 'store_true', default = True)
 ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
 ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
 
@@ -93,23 +88,14 @@ match args["d"] :
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
 
-brisque_model = os.path.join(script_path, args["brisque_model"])
-brisque_range = os.path.join(script_path, args["brisque_range"])
-
 if (verbose >= 4) : 
     print("model =", fd_model)
-    print("brisque_model =", brisque_model)
-    print("brisque_range =", brisque_range)
 
 image_path = args["file"]
 
 # Model files exist check
 if (os.path.isfile(fd_model) != True) :
     sys.exit(ERROR_CANTOPEN)
-if (os.path.isfile(brisque_model) != True) :
-    skip_brisque = True
-if (os.path.isfile(brisque_model) != True) :
-    skip_brisque = True
 
 if (verbose >= 1) : 
     print("input image =", image_path)
@@ -118,16 +104,6 @@ original_image = cv.imread(image_path)
 if original_image is None :
     print(image_path, " CAN'T READ.")
     sys.exit(ERROR_CANTOPEN)
-
-if (args["skip_brisque"] != True) :
-    # BRISQUE evaluation
-    brisque_array = cv.quality.QualityBRISQUE_compute(original_image, brisque_model, brisque_range)
-    brisque_score = round(brisque_array[0], 2)
-    if (verbose >= 1) : print("BRISQUE score =", brisque_score)
-    if (brisque_score > LOW_BRISQUE) :
-        if (verbose >= 2) : 
-            print("Evaluate terminated by low BRISQUE score.")
-        sys.exit(ERROR_LOW_BRISQUE)
 
 # Image resizing fot face detect.
 orig_height, orig_width, _ = original_image.shape

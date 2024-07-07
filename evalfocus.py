@@ -172,10 +172,8 @@ for face in faces :
     # Get result
     hist, bins = np.histogram(laplacian, bins = 32, range = (0,255))
     power_length = len(hist)
-    if (verbose >= 3) : 
-        print("(orig)hist=", hist, end=", ")
 
-    #determine power start
+    # Determine power calc. start/end
     power_start = 0
     power_end = 0
     max_hist = 0
@@ -185,6 +183,7 @@ for face in faces :
         else  :
             if (power_end != 0 and hist[i] != 0 and (hist[i - 1] / hist[i]) > HIST_RISE) :
                 power_start = i
+    # Limit power_start 
     if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
         power_start = power_end - POWER_RANGE
 
@@ -192,7 +191,7 @@ for face in faces :
         print("power_start=", power_start, end=", ")
         print("power_end=", power_end)
         print("hist=", hist[ power_start : power_end], end=", ")
-    # Compute the power
+    # Calc. the power
     power = 0
     for i in range(power_start, power_end) :
         power += hist[i] * i

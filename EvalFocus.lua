@@ -16,7 +16,7 @@ local prefs = import 'LrPrefs'.prefsForPlugin()
 --Logger:enable('logfile')
 
 local MINRESULT = 5
-local LOW_BRISQUE = 4
+--local LOW_BRISQUE = 4
 local CurrentCatalog = LrApplication.activeCatalog()
 local python = '/opt/homebrew/bin/python3 '
 local script = '/evalfocus.py '
@@ -62,7 +62,7 @@ LrTasks.startAsyncTask( function ()
 				end
 			else
 --				Logger:info('skip non JPEG file.')
-			end --isVidep
+			end --isVideo
 			ProgressBar:setPortionComplete(i, countPhotos)
 		end --end of for photos loop
 		ProgressBar:done()

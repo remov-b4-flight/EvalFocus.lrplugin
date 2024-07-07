@@ -16,7 +16,7 @@ MAX_RESULT = 255
 SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
-POWER_RANGE = 6
+HIST_DROP = 1.25
 MOUTH_DEDUCT = 0.75
 EYE_DEDUCT = 0.85
 FACE_DEDUCT = 0.9
@@ -66,7 +66,7 @@ ap.add_argument("file", help = "Image file to process.",)
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
 ap.add_argument("-k", help = "laplacian kernel", type = int, choices = [1,3,5,7,9], default = 5)
 ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8,16,32], default = 8)
-#ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
+ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
 ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
@@ -170,12 +170,19 @@ for face in faces :
         cv.waitKey(VISUAL_WAIT)
     # Get result
     hist, bins = np.histogram(laplacian, bins = 32, range = (0,255))
+    power_length = len(hist)
+
+    #determine power start
+    power_start = 0
+    for i in range(1, power_length - 1) :
+        if (hist[i] > 0 and (hist[i - 1] / hist[i]) < HIST_DROP) :
+            power_start = i
+            break
+    if (verbose >= 3) : 
+        print("power_start=", power_start)
+        print("hist=", hist[ -1 * (power_length - power_start) : ], end=", ")
     # Compute the power
     power = 0
-    power_length = len(hist)
-    power_start = int(power_length - POWER_RANGE)
-    if (verbose >= 3) : 
-        print("hist=", hist[ -1 * POWER_RANGE : ], end=", ")
     for i in range(power_start, power_length) :
         power += hist[i] * i
 

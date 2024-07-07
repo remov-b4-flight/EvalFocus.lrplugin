@@ -16,7 +16,8 @@ MAX_RESULT = 255
 SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
-HIST_DROP = 1.25
+HIST_RISE = 2
+POWER_RANGE = 6
 MOUTH_DEDUCT = 0.75
 EYE_DEDUCT = 0.85
 FACE_DEDUCT = 0.9
@@ -171,19 +172,29 @@ for face in faces :
     # Get result
     hist, bins = np.histogram(laplacian, bins = 32, range = (0,255))
     power_length = len(hist)
+    if (verbose >= 3) : 
+        print("(orig)hist=", hist, end=", ")
 
     #determine power start
     power_start = 0
-    for i in range(1, power_length - 1) :
-        if (hist[i] > 0 and (hist[i - 1] / hist[i]) < HIST_DROP) :
-            power_start = i
-            break
+    power_end = 0
+    max_hist = 0
+    for i in range((power_length - 1), 1, -1) :
+        if (power_end == 0 and hist[i] != 0) :
+            power_end = i
+        else  :
+            if (power_end != 0 and hist[i] != 0 and (hist[i - 1] / hist[i]) > HIST_RISE) :
+                power_start = i
+    if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
+        power_start = power_end - POWER_RANGE
+
     if (verbose >= 3) : 
-        print("power_start=", power_start)
-        print("hist=", hist[ -1 * (power_length - power_start) : ], end=", ")
+        print("power_start=", power_start, end=", ")
+        print("power_end=", power_end)
+        print("hist=", hist[ power_start : power_end], end=", ")
     # Compute the power
     power = 0
-    for i in range(power_start, power_length) :
+    for i in range(power_start, power_end) :
         power += hist[i] * i
 
     if (verbose >= 1) : 
@@ -217,7 +228,7 @@ power_kpixel = max_power / pixel_count
 if (verbose >= 2) :
     print("10Kpixels=", pixel_count)
     print("power/10Kpixels={0:.2f}".format(power_kpixel))
-result = np.ceil(power_kpixel)
+result = int(np.ceil(power_kpixel))
 
 # Make image log
 #if (args["vlog"]) :

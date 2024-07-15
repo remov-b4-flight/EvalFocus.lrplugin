@@ -6,7 +6,7 @@ EvalFocus.lrdevplugin
 
 return {
 
-	LrSdkVersion = 3.0,
+	LrSdkVersion = 4.0,
 
 	LrToolkitIdentifier = 'nu.mine.ruffles.evalfocus',
 	LrPluginName = 'EvalFocus',
@@ -22,6 +22,6 @@ return {
 		file = 'EvalClear.lua',
 		enabledWhen = 'photosAvailable',},
 	},
-	VERSION = { major = 0, minor = 8, revision = 1, build=0, },
+	VERSION = { major = 0, minor = 8, revision = 2, build=0, },
 
 }

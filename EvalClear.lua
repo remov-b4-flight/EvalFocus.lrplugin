@@ -26,6 +26,6 @@ LrTasks.startAsyncTask( function ()
 			ProgressBar:setPortionComplete(i, countPhotos)
 		end --end of for photos loop
 		ProgressBar:done()
-	end ) --end of withWriteAccessDo
+	end, { timeout = 0.1 }) --end of withWriteAccessDo
 end ) --end of startAsyncTask function()
 return

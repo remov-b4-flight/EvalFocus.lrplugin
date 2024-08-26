@@ -222,7 +222,14 @@ for face in faces :
 # End loop of faces
 
 max_face = faces[max_index]
+if (verbose >= 3) : 
+    print("width=", max_face[FACE.WIDTH])
+    print("height=", max_face[FACE.HEIGHT])
 pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // 10000
+#round up for too small face
+if (pixel_count == 0) :
+    pixel_count = 1
+
 power_kpixel = max_power / pixel_count
 if (verbose >= 2) :
     print("10Kpixels=", pixel_count)

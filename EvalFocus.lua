@@ -4,6 +4,9 @@ EvalFocus.lrdevplugin
 @author @remov_b4_flight
 ]]
 
+-- Please specfy python in your local enviromnent.
+local python = '/opt/homebrew/bin/python3'
+
 local PluginTitle = 'EvalFocus'
 local LrApplication = import 'LrApplication'
 --local LrLogger = import 'LrLogger'
@@ -15,11 +18,11 @@ local prefs = import 'LrPrefs'.prefsForPlugin()
 
 --Logger:enable('logfile')
 
+local SEP = ' '
 local MINRESULT = 5
 --local LOW_BRISQUE = 4
 local CurrentCatalog = LrApplication.activeCatalog()
-local python = '/opt/homebrew/bin/python3 '
-local script = '/evalfocus.py '
+local script = '/evalfocus.py'
 local script_path = _PLUGIN.path .. script
 
 if (prefs.AutoReject == nil) then
@@ -42,13 +45,13 @@ LrTasks.startAsyncTask( function ()
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 			if (PhotoIt:getRawMetadata('fileFormat') == 'JPG') then 
 				local FilePath = PhotoIt:getRawMetadata('path')
-				local CommandLine = python .. script_path .. FilePath  
---				Logger:info(FilePath)
+				local CommandLine = python .. SEP .. script_path .. SEP .. FilePath
+--				Logger:info(CommandLine)
 				local r = LrTasks.execute(CommandLine)
 				local value = r / 256
 --				Logger:info('value=' .. value)
+				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
 				if (MINRESULT <= value) then
-					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
 					if (prefs.AutoReject == true  and value < prefs.RejectRange) then
 --						if (value == LOW_BRISQUE) then
 --							Logger:warn('rejected by low BRISQUE.')

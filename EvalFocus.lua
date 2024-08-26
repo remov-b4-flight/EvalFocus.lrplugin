@@ -4,9 +4,6 @@ EvalFocus.lrdevplugin
 @author @remov_b4_flight
 ]]
 
---[[ Please specify python at your environment.]]
-local python = '/opt/homebrew/bin/python3'
-
 local PluginTitle = 'EvalFocus'
 local LrApplication = import 'LrApplication'
 --local LrLogger = import 'LrLogger'
@@ -21,8 +18,9 @@ local prefs = import 'LrPrefs'.prefsForPlugin()
 local MINRESULT = 5
 --local LOW_BRISQUE = 4
 local CurrentCatalog = LrApplication.activeCatalog()
+local python = '/opt/homebrew/bin/python3 '
 local script = '/evalfocus.py '
-local script_path = _PLUGIN.path .. ' ' ..script
+local script_path = _PLUGIN.path .. script
 
 if (prefs.AutoReject == nil) then
 	prefs.AutoReject = false

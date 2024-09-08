@@ -9,13 +9,13 @@ local python = '/opt/homebrew/bin/python3'
 
 local PluginTitle = 'EvalFocus'
 local LrApplication = import 'LrApplication'
---local LrLogger = import 'LrLogger'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
 local LrSelection = import 'LrSelection'
---local Logger = LrLogger(PluginTitle)
 local prefs = import 'LrPrefs'.prefsForPlugin()
 
+--local LrLogger = import 'LrLogger'
+--local Logger = LrLogger(PluginTitle)
 --Logger:enable('logfile')
 
 local SEP = ' '
@@ -47,8 +47,8 @@ LrTasks.startAsyncTask( function ()
 				local FilePath = PhotoIt:getRawMetadata('path')
 				local CommandLine = python .. SEP .. script_path .. SEP .. FilePath
 --				Logger:info(CommandLine)
-				local r = LrTasks.execute(CommandLine)
-				local value = r / 256
+				-- only MSB 8 bits are valid
+				local value = LrTasks.execute(CommandLine) / 256
 --				Logger:info('value=' .. value)
 				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
 				if (MINRESULT <= value) then
@@ -61,7 +61,7 @@ LrTasks.startAsyncTask( function ()
 						PhotoIt:setRawMetadata('pickStatus', -1)
 					end
 				else
---					Logger:error('retern indicates some error.')
+--					Logger:error('return indicates some error.')
 				end
 			else
 --				Logger:info('skip non JPEG file.')

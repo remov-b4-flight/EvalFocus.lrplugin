@@ -20,7 +20,7 @@ HIST_RISE = 2
 POWER_RANGE = 6
 MOUTH_DEDUCT = 0.75
 EYE_DEDUCT = 0.85
-FACE_DEDUCT = 0.9
+FACE_DEDUCT = 0.95
 # Error code
 ERROR_CANTOPEN = 2
 # FaceDetectorYN result index

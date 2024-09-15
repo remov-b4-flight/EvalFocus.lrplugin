@@ -18,12 +18,12 @@ local prefs = import 'LrPrefs'.prefsForPlugin()
 --local Logger = LrLogger(PluginTitle)
 --Logger:enable('logfile')
 
+--Constants
 local SEP = ' '
 local MINRESULT = 5
---local LOW_BRISQUE = 4
-local CurrentCatalog = LrApplication.activeCatalog()
 local script = '/evalfocus.py'
 local script_path = _PLUGIN.path .. script
+--local LOW_BRISQUE = 4
 
 if (prefs.AutoReject == nil) then
 	prefs.AutoReject = false
@@ -31,6 +31,8 @@ end
 if (prefs.RejectRange == nil) then
 	prefs.RejectRange = 30
 end
+
+local CurrentCatalog = LrApplication.activeCatalog()
 
 --Main part of this plugin.
 LrTasks.startAsyncTask( function ()

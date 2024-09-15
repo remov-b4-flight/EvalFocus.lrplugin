@@ -1,7 +1,7 @@
 # EvalFocus.lrplugin
 EvalFocus-plugin
 Evalfocus is Adobe Lightroom plugin that evaluate correct focus on JPEG photo.
-Mainly developed for Mac envisonment. I have no Windows Lightroom environment.
+Mainly developed for Mac environment. I have no Windows Lightroom environment.
 ## pre-requesties
 * MacOS
 * Lightroom
@@ -10,7 +10,7 @@ Mainly developed for Mac envisonment. I have no Windows Lightroom environment.
 * numpy
 * pip modules opcncv-python / opencv-pyton-contrib
 ## install
-* install Evalfocus.lrdevplugin as normal lightroom plugin
+* install Evalfocus.lrplugin as normal lightroom plugin
 * make symbolic link each yml files on plugin path /opt/homebrew/Celllar/opencv/[version]/share/opencv4/quality to plugin folder
 ## use
 Select Photos and Select Lightroom menu Library->Plugin Extra->Evalfocus->evaluate

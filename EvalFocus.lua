@@ -68,7 +68,9 @@ LrTasks.startAsyncTask( function ()
 			else
 --				Logger:info('skip non JPEG file.')
 			end --isVideo
-			ProgressBar:setPortionComplete(i, countPhotos)
+			if ((i % 10) == 0) then 
+				ProgressBar:setPortionComplete(i, countPhotos)
+			end
 		end --end of for photos loop
 		ProgressBar:done()
 	end, { timeout = 0.1 } ) --end of withWriteAccessDo

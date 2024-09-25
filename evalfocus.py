@@ -17,7 +17,7 @@ SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
 HIST_RISE = 2
-POWER_RANGE = 6
+POWER_RANGE = 8
 MOUTH_DEDUCT = 0.75
 EYE_DEDUCT = 0.85
 FACE_DEDUCT = 0.95
@@ -67,9 +67,9 @@ ap.add_argument("file", help = "Image file to process.",)
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
 ap.add_argument("-k", help = "laplacian kernel", type = int, choices = [1,3,5,7,9], default = 5)
 ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8,16,32], default = 8)
-ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
+#ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 #ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
 #ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
 
@@ -126,58 +126,25 @@ faces_count = len(faces) if faces is not None else 0
 if (verbose >= 1) : 
     print("faces =", faces_count)
 
-# If any face not found, process entire image.
-faces = faces if faces is not None else [[
-    0, 0, width, height, 
-    0, 0,   # right eye (x,y)
-    0, 0,   # left eye (x,y)
-    0, 0,   # nose (x,y)
-    -1, -1,   # right mouth edge (x,y)
-    -1, -1,   # left mouth edge (x,y)
-    1       # trusty
-]]
-
-count = 0
-max_power = 0
-max_index = 0
-
-# Loop with detected faces
-for face in faces :
-
-    if (verbose >= 1) : 
-        print("area", count, end=": ")
-    face_rmouth_x = int(face[FACE.RMOUTH_X])
-    face_lmouth_x = int(face[FACE.LMOUTH_X])
-    if (faces_count >= 1 and verbose >= 2) :
-        print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
-    face_leye_x = int(face[FACE.LEYE_X])
-    face_reye_x = int(face[FACE.REYE_X])
-    if (faces_count >= 1 and verbose >= 2) :
-        print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
-    face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
-    # Crop face
-    face_x1 = int(face[FACE.X])
-    face_x2 = int(face[FACE.X] + face[FACE.WIDTH])
-    face_y1 = int(face[FACE.Y])
-    face_y2 = int(face[FACE.Y] + face[FACE.HEIGHT])
-    face_image = image[face_y1 : face_y2,
-                        face_x1 : face_x2]
+if (faces_count == 0) :
+    # Face not found
     # Grayscale conversion
-    gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     # Laplacian conversion
-    laplacian = cv.Laplacian(gray, lap_ddepth, lap_kernel)
-#   if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
-#       cv.imshow("crop", laplacian)
-#       cv.waitKey(VISUAL_WAIT)
+    edge_image = cv.Laplacian(gray, lap_ddepth, lap_kernel)
+    #   if (args["laplacian"] and verbose >= 3) :
+    #       cv.imshow("crop", edge_image)
+    #       cv.waitKey(VISUAL_WAIT)
+    pixel_count = width * height // 10000
     # Get result
-    hist, bins = np.histogram(laplacian, bins = 32, range = (0,255))
+    hist, bins = np.histogram(edge_image, bins = 32, range = (0,255))
     power_length = len(hist)
-
     # Determine power calc. start/end
     power_start = 0
     power_end = 0
     max_hist = 0
-    for i in range((power_length - 1), 1, -1) :
+    for i in range((power_length - 1), 0, -1) :
+        print("hist[{0}]={1}".format(i, hist[i]))
         if (power_end == 0 and hist[i] != 0) :
             power_end = i
         else  :
@@ -185,15 +152,90 @@ for face in faces :
                 power_start = i
     # Limit power_start 
     if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
-        power_start = power_end - POWER_RANGE
+        power_start = power_end - POWER_RANGE + 1
 
+    if (verbose >= 4) :
+        print()
+        print("hist=", hist)
     if (verbose >= 3) : 
         print("power_start=", power_start, end=", ")
         print("power_end=", power_end)
-        print("hist=", hist[ power_start : power_end], end=", ")
+        print("hist=", hist[ power_start : power_end + 1], end=", ")
     # Calc. the power
     power = 0
-    for i in range(power_start, power_end) :
+    for i in range(power_start, power_end + 1) :
+        print("{0} += {1} * {2}".format(power, i, hist[i]))
+        power += hist[i] * i
+    max_power = power
+    if (verbose >= 1) : 
+        print("power=", power, end=", ")
+
+    if (verbose >= 1) : print()
+
+else :
+    # Faces found
+    count = 0
+    max_power = 0
+    max_index = 0
+
+    # Loop with detected faces
+    for face in faces :
+
+        if (verbose >= 1) : 
+            print("area", count, end=": ")
+        face_rmouth_x = int(face[FACE.RMOUTH_X])
+        face_lmouth_x = int(face[FACE.LMOUTH_X])
+        if (faces_count >= 1 and verbose >= 2) :
+            print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
+        face_leye_x = int(face[FACE.LEYE_X])
+        face_reye_x = int(face[FACE.REYE_X])
+        if (faces_count >= 1 and verbose >= 2) :
+            print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
+        face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
+        # Crop face
+        face_x1 = int(face[FACE.X])
+        face_x2 = int(face[FACE.X] + face[FACE.WIDTH])
+        face_y1 = int(face[FACE.Y])
+        face_y2 = int(face[FACE.Y] + face[FACE.HEIGHT])
+        face_image = image[face_y1 : face_y2,
+                            face_x1 : face_x2]
+        # Grayscale conversion
+        gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
+        # Laplacian conversion
+        edge_image = cv.Laplacian(gray, lap_ddepth, lap_kernel)
+    #   if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
+    #       cv.imshow("crop", edge_image)
+    #       cv.waitKey(VISUAL_WAIT)
+    # Get result
+    hist, bins = np.histogram(edge_image, bins = 32, range = (0,255))
+    power_length = len(hist)
+
+    # Determine power calc. start/end
+    power_start = 0
+    power_end = 0
+    max_hist = 0
+    for i in range((power_length - 1), 0, -1) :
+        #print("hist[{0}]={1}".format(i, hist[i]))
+        if (power_end == 0 and hist[i] != 0) :
+            power_end = i
+        else  :
+            if (power_end != 0 and hist[i] != 0 and (hist[i - 1] / hist[i]) > HIST_RISE) :
+                power_start = i
+    # Limit power_start 
+    if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
+        power_start = power_end - POWER_RANGE + 1
+
+    if (verbose >= 4) :
+        print()
+        print("hist=", hist)
+    if (verbose >= 3) : 
+        print("power_start=", power_start, end=", ")
+        print("power_end=", power_end)
+        print("hist=", hist[ power_start : power_end + 1], end=", ")
+    # Calc. the power
+    power = 0
+    for i in range(power_start, power_end + 1) :
+        #print("{0}+=hist[{1}]={2}".format(power, i, hist[i]))
         power += hist[i] * i
 
     if (verbose >= 1) : 
@@ -217,15 +259,17 @@ for face in faces :
         max_power = power
         max_index = count
     if (verbose >= 1) : print()
-    # End of loop
-    count += 1
-# End loop of faces
 
-max_face = faces[max_index]
-if (verbose >= 3) : 
-    print("width=", max_face[FACE.WIDTH])
-    print("height=", max_face[FACE.HEIGHT])
-pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // 10000
+    count += 1
+    # End loop of faces
+
+    max_face = faces[max_index]
+    if (verbose >= 3) : 
+        print("width=", max_face[FACE.WIDTH])
+        print("height=", max_face[FACE.HEIGHT])
+    pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // 10000
+# End of if (faces_count = 0)
+
 #round up for too small face
 if (pixel_count == 0) :
     pixel_count = 1

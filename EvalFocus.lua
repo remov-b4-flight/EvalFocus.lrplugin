@@ -42,6 +42,13 @@ LrTasks.startAsyncTask( function ()
 	local TargetPhoto = CurrentCatalog:getTargetPhoto()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
 	local countPhotos = #SelectedPhotos
+	local c = math.log(countPhotos, 10)
+	local pgtick = 10
+	if ( c > 3.0 ) then
+		pgtick = 100
+	elseif (c > 2.6) then
+		pgtick = 25
+	end
 	--loops photos in selected
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
 		for i,PhotoIt in ipairs(SelectedPhotos) do
@@ -68,7 +75,7 @@ LrTasks.startAsyncTask( function ()
 			else
 --				Logger:info('skip non JPEG file.')
 			end --isVideo
-			if ((i % 10) == 0) then 
+			if ((i % pgtick) == 0) then 
 				ProgressBar:setPortionComplete(i, countPhotos)
 			end
 		end --end of for photos loop

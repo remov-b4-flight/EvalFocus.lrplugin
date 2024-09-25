@@ -79,7 +79,7 @@ ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8, 32], d
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
 #ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
-ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
+#ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
 #ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
@@ -178,9 +178,9 @@ for face in faces :
         # Laplacian conversion
         edge_image = cv.Laplacian(gray, lap_ddepth, lap_kernel)
 
-    if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
-           cv.imshow("Cropped", edge_image)
-           cv.waitKey(VISUAL_WAIT)
+    #if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
+    #       cv.imshow("Cropped", edge_image)
+    #       cv.waitKey(VISUAL_WAIT)
 
     # Get result
     hist, bins = np.histogram(edge_image, bins = 32, range = (0,255))

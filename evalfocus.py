@@ -70,7 +70,7 @@ ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8,16,32],
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
 #ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
-#ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
+ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
 #ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
@@ -126,15 +126,19 @@ faces_count = len(faces) if faces is not None else 0
 if (verbose >= 1) : 
     print("faces =", faces_count)
 
-if (faces_count == 0) :
-    # Face not found
+if (faces_count == 0) : # Face not found
     # Grayscale conversion
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    # Laplacian conversion
-    edge_image = cv.Laplacian(gray, lap_ddepth, lap_kernel)
-    #   if (args["laplacian"] and verbose >= 3) :
-    #       cv.imshow("crop", edge_image)
-    #       cv.waitKey(VISUAL_WAIT)
+    # Sobel conversion
+    sobel_x = cv.Sobel(image, lap_ddepth, 1, 0, lap_kernel)
+    sobel_y = cv.Sobel(image, lap_ddepth, 0, 1, lap_kernel)
+    sobel_x = cv.convertScaleAbs(sobel_x)
+    sobel_y = cv.convertScaleAbs(sobel_y)
+    edge_image = cv.addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0)
+
+    if (args["laplacian"] and verbose >= 3) :
+        cv.imshow("Sobel", edge_image)
+        cv.waitKey(VISUAL_WAIT)
     pixel_count = width * height // 10000
     # Get result
     hist, bins = np.histogram(edge_image, bins = 32, range = (0,255))
@@ -144,7 +148,7 @@ if (faces_count == 0) :
     power_end = 0
     max_hist = 0
     for i in range((power_length - 1), 0, -1) :
-        print("hist[{0}]={1}".format(i, hist[i]))
+        #print("hist[{0}]={1}".format(i, hist[i]))
         if (power_end == 0 and hist[i] != 0) :
             power_end = i
         else  :
@@ -164,7 +168,7 @@ if (faces_count == 0) :
     # Calc. the power
     power = 0
     for i in range(power_start, power_end + 1) :
-        print("{0} += {1} * {2}".format(power, i, hist[i]))
+        #print("{0} += {1} * {2}".format(power, i, hist[i]))
         power += hist[i] * i
     max_power = power
     if (verbose >= 1) : 
@@ -172,8 +176,7 @@ if (faces_count == 0) :
 
     if (verbose >= 1) : print()
 
-else :
-    # Faces found
+else :  # Faces found
     count = 0
     max_power = 0
     max_index = 0
@@ -204,7 +207,7 @@ else :
         # Laplacian conversion
         edge_image = cv.Laplacian(gray, lap_ddepth, lap_kernel)
     #   if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
-    #       cv.imshow("crop", edge_image)
+    #       cv.imshow("Laplacian", edge_image)
     #       cv.waitKey(VISUAL_WAIT)
     # Get result
     hist, bins = np.histogram(edge_image, bins = 32, range = (0,255))

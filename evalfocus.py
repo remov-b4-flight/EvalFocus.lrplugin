@@ -11,6 +11,7 @@ import numpy as np
 #import matplotlib.pyplot as plt
 
 # Constants
+PIXEL10K = 10000
 MIN_RESULT = 6
 MAX_RESULT = 255
 SMALL_LS = 2400
@@ -58,6 +59,14 @@ def get_resize_factor(long_side) :
     else :
         return 1
 
+def get_sobel_edges(image, ddepth, kernel) :
+    sobel_x = cv.Sobel(image, ddepth, 1, 0, kernel)
+    sobel_y = cv.Sobel(image, ddepth, 0, 1, kernel)
+    sobel_x = cv.convertScaleAbs(sobel_x)
+    sobel_y = cv.convertScaleAbs(sobel_y)
+    edges = cv.addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0)
+    return edges
+
 # Main
 result = 0
 
@@ -65,8 +74,8 @@ result = 0
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.",)
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
-ap.add_argument("-k", help = "laplacian kernel", type = int, choices = [1,3,5,7,9], default = 5)
-ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8,16,32], default = 8)
+ap.add_argument("-k", help = "laplacian kernel", type = int, choices = [1, 3, 5, 7, 9], default = 5)
+ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8, 32], default = 8)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
 #ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
@@ -80,8 +89,6 @@ lap_kernel = args["k"]
 match args["d"] :
     case 32 :
         lap_ddepth = cv.CV_32F
-    case 16 :
-        lap_ddepth = cv.CV_16U
     case _ :
         lap_ddepth = cv.CV_8U
 
@@ -126,89 +133,55 @@ faces_count = len(faces) if faces is not None else 0
 if (verbose >= 1) : 
     print("faces =", faces_count)
 
-if (faces_count == 0) : # Face not found
-    # Grayscale conversion
-    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    # Sobel conversion
-    sobel_x = cv.Sobel(image, lap_ddepth, 1, 0, lap_kernel)
-    sobel_y = cv.Sobel(image, lap_ddepth, 0, 1, lap_kernel)
-    sobel_x = cv.convertScaleAbs(sobel_x)
-    sobel_y = cv.convertScaleAbs(sobel_y)
-    edge_image = cv.addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0)
+# If any face not found, process entire image.
+faces = faces if faces is not None else [[
+    0, 0, width, height, 
+    0, 0,   # right eye (x,y)
+    0, 0,   # left eye (x,y)
+    0, 0,   # nose (x,y)
+    -1, -1,   # right mouth edge (x,y)
+    -1, -1,   # left mouth edge (x,y)
+    1       # trusty
+]]
 
-    if (args["laplacian"] and verbose >= 3) :
-        cv.imshow("Sobel", edge_image)
-        cv.waitKey(VISUAL_WAIT)
-    pixel_count = width * height // 10000
-    # Get result
-    hist, bins = np.histogram(edge_image, bins = 32, range = (0,255))
-    power_length = len(hist)
-    # Determine power calc. start/end
-    power_start = 0
-    power_end = 0
-    max_hist = 0
-    for i in range((power_length - 1), 0, -1) :
-        #print("hist[{0}]={1}".format(i, hist[i]))
-        if (power_end == 0 and hist[i] != 0) :
-            power_end = i
-        else  :
-            if (power_end != 0 and hist[i] != 0 and (hist[i - 1] / hist[i]) > HIST_RISE) :
-                power_start = i
-    # Limit power_start 
-    if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
-        power_start = power_end - POWER_RANGE + 1
+count = 0
+max_power = 0
+max_index = 0
 
-    if (verbose >= 4) :
-        print()
-        print("hist=", hist)
-    if (verbose >= 3) : 
-        print("power_start=", power_start, end=", ")
-        print("power_end=", power_end)
-        print("hist=", hist[ power_start : power_end + 1], end=", ")
-    # Calc. the power
-    power = 0
-    for i in range(power_start, power_end + 1) :
-        #print("{0} += {1} * {2}".format(power, i, hist[i]))
-        power += hist[i] * i
-    max_power = power
+# Loop with detected faces
+for face in faces :
+
     if (verbose >= 1) : 
-        print("power=", power, end=", ")
-
-    if (verbose >= 1) : print()
-
-else :  # Faces found
-    count = 0
-    max_power = 0
-    max_index = 0
-
-    # Loop with detected faces
-    for face in faces :
-
-        if (verbose >= 1) : 
-            print("area", count, end=": ")
-        face_rmouth_x = int(face[FACE.RMOUTH_X])
-        face_lmouth_x = int(face[FACE.LMOUTH_X])
-        if (faces_count >= 1 and verbose >= 2) :
-            print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
-        face_leye_x = int(face[FACE.LEYE_X])
-        face_reye_x = int(face[FACE.REYE_X])
-        if (faces_count >= 1 and verbose >= 2) :
-            print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
-        face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
-        # Crop face
-        face_x1 = int(face[FACE.X])
-        face_x2 = int(face[FACE.X] + face[FACE.WIDTH])
-        face_y1 = int(face[FACE.Y])
-        face_y2 = int(face[FACE.Y] + face[FACE.HEIGHT])
-        face_image = image[face_y1 : face_y2,
-                            face_x1 : face_x2]
-        # Grayscale conversion
-        gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
+        print("area", count, end=": ")
+    face_rmouth_x = int(face[FACE.RMOUTH_X])
+    face_lmouth_x = int(face[FACE.LMOUTH_X])
+    if (faces_count >= 1 and verbose >= 2) :
+        print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
+    face_leye_x = int(face[FACE.LEYE_X])
+    face_reye_x = int(face[FACE.REYE_X])
+    if (faces_count >= 1 and verbose >= 2) :
+        print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
+    face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
+    # Crop face
+    face_x1 = int(face[FACE.X])
+    face_x2 = int(face[FACE.X] + face[FACE.WIDTH])
+    face_y1 = int(face[FACE.Y])
+    face_y2 = int(face[FACE.Y] + face[FACE.HEIGHT])
+    face_image = image[face_y1 : face_y2,
+                        face_x1 : face_x2]
+    # Grayscale conversion
+    gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
+    if (faces_count == 0) : 
+        # Sobel filter
+        edge_image = get_sobel_edges(gray, lap_ddepth, lap_kernel)
+    else :
         # Laplacian conversion
         edge_image = cv.Laplacian(gray, lap_ddepth, lap_kernel)
-    #   if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
-    #       cv.imshow("Laplacian", edge_image)
-    #       cv.waitKey(VISUAL_WAIT)
+
+    if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
+           cv.imshow("Cropped", edge_image)
+           cv.waitKey(VISUAL_WAIT)
+
     # Get result
     hist, bins = np.histogram(edge_image, bins = 32, range = (0,255))
     power_length = len(hist)
@@ -216,9 +189,8 @@ else :  # Faces found
     # Determine power calc. start/end
     power_start = 0
     power_end = 0
-    max_hist = 0
+
     for i in range((power_length - 1), 0, -1) :
-        #print("hist[{0}]={1}".format(i, hist[i]))
         if (power_end == 0 and hist[i] != 0) :
             power_end = i
         else  :
@@ -235,20 +207,17 @@ else :  # Faces found
         print("power_start=", power_start, end=", ")
         print("power_end=", power_end)
         print("hist=", hist[ power_start : power_end + 1], end=", ")
+
     # Calc. the power
     power = 0
     for i in range(power_start, power_end + 1) :
-        #print("{0}+=hist[{1}]={2}".format(power, i, hist[i]))
         power += hist[i] * i
 
     if (verbose >= 1) : 
         print("power=", power, end=", ")
-    
+
     # If no faces not detected results deducted.
-    if (faces_count == 0) : 
-        power *= FACE_DEDUCT
-    # If both mouth edge not detected, results deducted.
-    else :
+    if (faces_count != 0) : 
         if (face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
             power *= MOUTH_DEDUCT
         if (face_reye_x <= 0 and face_leye_x <= 0) : 
@@ -264,14 +233,13 @@ else :  # Faces found
     if (verbose >= 1) : print()
 
     count += 1
-    # End loop of faces
+# End loop of faces
 
-    max_face = faces[max_index]
-    if (verbose >= 3) : 
-        print("width=", max_face[FACE.WIDTH])
-        print("height=", max_face[FACE.HEIGHT])
-    pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // 10000
-# End of if (faces_count = 0)
+max_face = faces[max_index]
+if (verbose >= 3) : 
+    print("width=", max_face[FACE.WIDTH])
+    print("height=", max_face[FACE.HEIGHT])
+pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // PIXEL10K
 
 #round up for too small face
 if (pixel_count == 0) :

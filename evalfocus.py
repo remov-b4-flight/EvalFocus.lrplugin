@@ -12,11 +12,12 @@ import numpy as np
 
 # Constants
 PIXEL10K = 10000
-MIN_RESULT = 6
+MIN_RESULT = 5
 MAX_RESULT = 255
 SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
+HIST_BINS = 32
 HIST_RISE = 2
 POWER_RANGE = 8
 MOUTH_DEDUCT = 0.75
@@ -171,6 +172,7 @@ for face in faces :
                         face_x1 : face_x2]
     # Grayscale conversion
     gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
+    # Find edges
     if (faces_count == 0) : 
         # Sobel filter
         edge_image = get_sobel_edges(gray, lap_ddepth, lap_kernel)
@@ -179,11 +181,11 @@ for face in faces :
         edge_image = cv.Laplacian(gray, lap_ddepth, lap_kernel)
 
     #if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
-    #       cv.imshow("Cropped", edge_image)
+    #       cv.imshow("Edges", edge_image)
     #       cv.waitKey(VISUAL_WAIT)
 
     # Get result
-    hist, bins = np.histogram(edge_image, bins = 32, range = (0,255))
+    hist, bins = np.histogram(edge_image, bins = HIST_BINS, range = (0,255))
     power_length = len(hist)
 
     # Determine power calc. start/end
@@ -230,7 +232,8 @@ for face in faces :
     if (power > max_power) : 
         max_power = power
         max_index = count
-    if (verbose >= 1) : print()
+    if (verbose >= 1) : 
+        print()
 
     count += 1
 # End loop of faces

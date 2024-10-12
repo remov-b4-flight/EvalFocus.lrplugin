@@ -19,7 +19,7 @@ BIG_LS = 4800
 VISUAL_WAIT = 2000
 HIST_BINS = 32
 HIST_RISE = 2
-POWER_RANGE = 8
+POWER_RANGE = 6
 MOUTH_DEDUCT = 0.75
 EYE_DEDUCT = 0.85
 FACE_DEDUCT = 0.95
@@ -79,6 +79,7 @@ ap.add_argument("-k", help = "laplacian kernel", type = int, choices = [1, 3, 5,
 ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8, 32], default = 8)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
+ap.add_argument("-o", help = "output raw result to file", default = "")
 #ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 #ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
 #ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
@@ -87,11 +88,11 @@ args = vars(ap.parse_args())
 # Additional parameter parse
 verbose = args["v"]
 lap_kernel = args["k"]
-match args["d"] :
-    case 32 :
-        lap_ddepth = cv.CV_32F
-    case _ :
-        lap_ddepth = cv.CV_8U
+
+if args["d"] == 32 :
+    lap_ddepth = cv.CV_32F
+else :
+    lap_ddepth = cv.CV_8U
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
@@ -213,7 +214,10 @@ for face in faces :
     # Calc. the power
     power = 0
     for i in range(power_start, power_end + 1) :
-        power += hist[i] * i
+        if (hist[i] == 0) : 
+            power *= 0.9
+        else :
+            power += hist[i] * i
 
     if (verbose >= 1) : 
         print("power=", power, end=", ")
@@ -287,11 +291,19 @@ result = int(np.ceil(power_kpixel))
 #    plt.title(hist_title)
 #    plt.show()
 
+# Output result to stdout
+if (verbose >= 1) : 
+    print("result=", end="")
+print(result)
+
+#raw result output to file
+if (len(args["o"]) != 0) :
+    with open(args["o"], mode='w') as f :
+        f.write(str(result))
+
 # Return value to OS
 if (result > MAX_RESULT) :
     result = MAX_RESULT
 elif (0 <= result < MIN_RESULT) : 
     result = MIN_RESULT
-
-print("result=", result)
 sys.exit(result)

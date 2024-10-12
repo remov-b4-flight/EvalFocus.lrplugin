@@ -5,22 +5,23 @@ EvalFocus.lrdevplugin
 ]]
 
 -- Please specfy python in your local enviromnent.
-local python = '/opt/homebrew/bin/python3'
+local python = '/opt/homebrew/bin/python3.12'
 
 local PluginTitle = 'EvalFocus'
 local LrApplication = import 'LrApplication'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
 local LrSelection = import 'LrSelection'
+local LrFileUtils = import 'LrFileUtils'
 local prefs = import 'LrPrefs'.prefsForPlugin()
 
---local LrLogger = import 'LrLogger'
---local Logger = LrLogger(PluginTitle)
---Logger:enable('logfile')
+local LrLogger = import 'LrLogger'
+local Logger = LrLogger(PluginTitle)
+Logger:enable('logfile')
 
 --Constants
 local SEP = ' '
-local MINRESULT = 5
+local OUTOP = '-o'
 local script = '/evalfocus.py'
 local script_path = _PLUGIN.path .. script
 --local LOW_BRISQUE = 4
@@ -54,23 +55,18 @@ LrTasks.startAsyncTask( function ()
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 			if (PhotoIt:getRawMetadata('fileFormat') == 'JPG') then 
 				local FilePath = PhotoIt:getRawMetadata('path')
-				local CommandLine = python .. SEP .. script_path .. SEP .. FilePath
---				Logger:info(CommandLine)
+				local TempPath = os.tmpname()
+				local CommandLine = python .. SEP .. script_path .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath
+				Logger:info(CommandLine)
 				-- only MSB 8 bits are valid
-				local value = LrTasks.execute(CommandLine) / 256
---				Logger:info('value=' .. value)
+				local retval = LrTasks.execute(CommandLine) / 256
+				-- get results to file
+				local value = tonumber(LrFileUtils.readFile(TempPath))
+				LrFileUtils.delete(TempPath)
+				Logger:info('value=' .. value)
 				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
-				if (MINRESULT <= value) then
-					if (prefs.AutoReject == true  and value < prefs.RejectRange) then
---						if (value == LOW_BRISQUE) then
---							Logger:warn('rejected by low BRISQUE.')
---						else
---							Logger:warn('rejected by value.')
---						end
-						PhotoIt:setRawMetadata('pickStatus', -1)
-					end
-				else
---					Logger:error('return indicates some error.')
+				if (prefs.AutoReject == true and value < prefs.RejectRange) then
+					PhotoIt:setRawMetadata('pickStatus', -1)
 				end
 			else
 --				Logger:info('skip non JPEG file.')

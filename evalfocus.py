@@ -155,6 +155,8 @@ for face in faces :
 
     if (verbose >= 1) : 
         print("area", count, end=": ")
+    if (verbose >= 4) :
+        print(face)
     face_rmouth_x = int(face[FACE.RMOUTH_X])
     face_lmouth_x = int(face[FACE.LMOUTH_X])
     if (faces_count >= 1 and verbose >= 2) :
@@ -165,12 +167,15 @@ for face in faces :
         print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
     face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
     # Crop face
-    face_x1 = int(face[FACE.X])
-    face_x2 = int(face[FACE.X] + face[FACE.WIDTH])
-    face_y1 = int(face[FACE.Y])
-    face_y2 = int(face[FACE.Y] + face[FACE.HEIGHT])
+    face_x1 = 0 if (face[FACE.X] < 0) else int(face[FACE.X]) 
+    face_x2 = face_x1 + int(face[FACE.WIDTH])
+    face_y1 = 0 if (face[FACE.Y] < 0) else int(face[FACE.Y])
+    face_y2 = face_y1 + int(face[FACE.HEIGHT])
     face_image = image[face_y1 : face_y2,
                         face_x1 : face_x2]
+    if (verbose >= 4) :
+        print ("face x1={0},x2={1},y1={2},y2={3}".format(face_x1,face_x2,face_y1,face_y2))
+
     # Grayscale conversion
     gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
     # Find edges
@@ -291,19 +296,18 @@ result = int(np.ceil(power_kpixel))
 #    plt.title(hist_title)
 #    plt.show()
 
+if (0 <= result < MIN_RESULT) : 
+    result = MIN_RESULT
+
 # Output result to stdout
 if (verbose >= 1) : 
     print("result=", end="")
 print(result)
 
-#raw result output to file
+# raw result output to file
 if (len(args["o"]) != 0) :
     with open(args["o"], mode='w') as f :
         f.write(str(result))
 
 # Return value to OS
-if (result > MAX_RESULT) :
-    result = MAX_RESULT
-elif (0 <= result < MIN_RESULT) : 
-    result = MIN_RESULT
 sys.exit(result)

@@ -15,16 +15,17 @@ local LrSelection = import 'LrSelection'
 local LrFileUtils = import 'LrFileUtils'
 local prefs = import 'LrPrefs'.prefsForPlugin()
 
-local LrLogger = import 'LrLogger'
-local Logger = LrLogger(PluginTitle)
-Logger:enable('logfile')
+--local LrLogger = import 'LrLogger'
+--local Logger = LrLogger(PluginTitle)
+--Logger:enable('logfile')
 
 --Constants
 local SEP = ' '
 local OUTOP = '-o'
 local script = '/evalfocus.py'
 local script_path = _PLUGIN.path .. script
---local LOW_BRISQUE = 4
+local MINRESULT = 5
+local NOTFOUND = 2
 
 if (prefs.AutoReject == nil) then
 	prefs.AutoReject = false
@@ -57,16 +58,22 @@ LrTasks.startAsyncTask( function ()
 				local FilePath = PhotoIt:getRawMetadata('path')
 				local TempPath = os.tmpname()
 				local CommandLine = python .. SEP .. script_path .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath
-				Logger:info(CommandLine)
+--				Logger:info(CommandLine)
 				-- only MSB 8 bits are valid
 				local retval = LrTasks.execute(CommandLine) / 256
 				-- get results to file
-				local value = tonumber(LrFileUtils.readFile(TempPath))
+				local contents = LrFileUtils.readFile(TempPath)
+				local value = FOTFOUND
+				if (string.len(contents) > 0) then
+					value = tonumber(contents)
+				end
 				LrFileUtils.delete(TempPath)
-				Logger:info('value=' .. value)
-				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
-				if (prefs.AutoReject == true and value < prefs.RejectRange) then
-					PhotoIt:setRawMetadata('pickStatus', -1)
+--				Logger:info('value=' .. value)
+				if (value >= MINRESULT) then 
+					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
+					if (prefs.AutoReject == true and value < prefs.RejectRange) then
+						PhotoIt:setRawMetadata('pickStatus', -1)
+					end
 				end
 			else
 --				Logger:info('skip non JPEG file.')

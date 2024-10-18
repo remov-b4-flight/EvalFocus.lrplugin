@@ -118,7 +118,7 @@ if original_image is None :
 orig_height, orig_width, _ = original_image.shape
 long_side = max(orig_height,orig_width)
 factor = get_resize_factor(long_side)
-if (verbose >= 1) : 
+if (verbose >= 2) : 
     print("resize factor=", factor)
 image = cv.resize(original_image, None, fx=factor, fy=factor, interpolation=cv.INTER_NEAREST_EXACT)
 
@@ -257,11 +257,11 @@ pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // PIXEL10K
 if (pixel_count == 0) :
     pixel_count = 1
 
-power_kpixel = max_power / pixel_count
+power_kpixel = max_power // pixel_count
 if (verbose >= 2) :
     print("10Kpixels=", pixel_count)
-    print("power/10Kpixels={0:.2f}".format(power_kpixel))
-result = int(np.ceil(power_kpixel))
+    print("power/10Kpixels=", power_kpixel)
+result = int(power_kpixel)
 
 # Make image log
 #if (args["vlog"]) :
@@ -296,9 +296,6 @@ result = int(np.ceil(power_kpixel))
 #    plt.title(hist_title)
 #    plt.show()
 
-if (0 <= result < MIN_RESULT) : 
-    result = MIN_RESULT
-
 # Output result to stdout
 if (verbose >= 1) : 
     print("result=", end="")
@@ -310,4 +307,8 @@ if (len(args["o"]) != 0) :
         f.write(str(result))
 
 # Return value to OS
+if (result > MAX_RESULT):
+    result = MAX_RESULT
+elif (0 <= result < MIN_RESULT) : 
+    result = MIN_RESULT
 sys.exit(result)

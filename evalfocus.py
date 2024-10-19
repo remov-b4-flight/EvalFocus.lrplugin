@@ -18,6 +18,7 @@ SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
 HIST_BINS = 32
+POWER_END_GATE = ((HIST_BINS/8)*3)
 HIST_RISE = 2
 POWER_RANGE = 6
 MOUTH_DEDUCT = 0.75
@@ -36,21 +37,19 @@ class FACE :
     LMOUTH_X = 12 ; LMOUTH_Y = 13
     TRUSTY = 14
 
-#class COLOR :
-#    RED = (0, 0, 255) ; BLUE = (255, 0, 0) ; GREEN = (0, 255, 0)
-#    MAGENTA = (255, 0, 255) ; CYAN = (255, 255, 0) ; YELLOW = (0, 255, 255)
-#    WHITE = (255, 255, 255)
+class COLOR :
+    RED = (0, 0, 255) ; BLUE = (255, 0, 0) ; GREEN = (0, 255, 0)
+    MAGENTA = (255, 0, 255) ; CYAN = (255, 255, 0) ; YELLOW = (0, 255, 255)
+    WHITE = (255, 255, 255)
 
 # Write vlog image to home
-#def write_image(file_path, image, sub_dir="vlog") :
-#    homedir = os.environ['HOME']
-#    (_, file_name) = os.path.split(file_path)
-#    report_dir = os.path.join(homedir, sub_dir)
-#    os.makedirs(report_dir, exist_ok = True)
-#
-#    export_file_path = os.path.join(report_dir, file_name)
-#
-#    cv.imwrite(export_file_path, image)
+def write_image(file_path, image, sub_dir="vlog") :
+    homedir = os.environ['HOME']
+    (_, file_name) = os.path.split(file_path)
+    report_dir = os.path.join(homedir, sub_dir)
+    os.makedirs(report_dir, exist_ok = True)
+    export_file_path = os.path.join(report_dir, file_name)
+    cv.imwrite(export_file_path, image)
 
 def get_resize_factor(long_side) :
     if (BIG_LS < long_side ) :
@@ -81,8 +80,8 @@ ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
 ap.add_argument("-o", help = "output raw result to file", default = "")
 #ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
-#ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
-#ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
+ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
+ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
 # Additional parameter parse
@@ -120,7 +119,8 @@ long_side = max(orig_height,orig_width)
 factor = get_resize_factor(long_side)
 if (verbose >= 2) : 
     print("resize factor=", factor)
-image = cv.resize(original_image, None, fx=factor, fy=factor, interpolation=cv.INTER_NEAREST_EXACT)
+image = cv.resize(original_image, None, fx=factor, fy=factor, 
+                  interpolation=cv.INTER_NEAREST_EXACT)
 
 if (verbose >= 2) : 
     print("shape =", image.shape)
@@ -147,8 +147,8 @@ faces = faces if faces is not None else [[
 ]]
 
 count = 0
-max_power = 0
-max_index = 0
+max_power = -1
+max_index = -1
 
 # Loop with detected faces
 for face in faces :
@@ -186,9 +186,9 @@ for face in faces :
         # Laplacian conversion
         edge_image = cv.Laplacian(gray, lap_ddepth, lap_kernel)
 
-    #if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
-    #       cv.imshow("Edges", edge_image)
-    #       cv.waitKey(VISUAL_WAIT)
+    if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
+           cv.imshow("Edges", edge_image)
+           cv.waitKey(VISUAL_WAIT)
 
     # Get result
     hist, bins = np.histogram(edge_image, bins = HIST_BINS, range = (0,255))
@@ -238,7 +238,7 @@ for face in faces :
 
     if (verbose >= 1 and faces_count >= 1) : 
         print("trusty=", face_trusty, end=", ")
-    if (power > max_power) : 
+    if (max_power < 0 or (power > max_power and power_end > POWER_END_GATE)) : 
         max_power = power
         max_index = count
     if (verbose >= 1) : 
@@ -264,29 +264,29 @@ if (verbose >= 2) :
 result = int(power_kpixel)
 
 # Make image log
-#if (args["vlog"]) :
-#    # Draw result for face has max power
-#    if(faces_count >= 1) :
-#        vlog_line = max(width,height) // 1000
-#        if (vlog_line < 3) : vlog_line = 3
+if (args["vlog"]) :
+    # Draw result for face has max power
+    if(faces_count >= 1) :
+        vlog_line = max(width,height) // 1000
+        if (vlog_line < 3) : vlog_line = 3
 
-#        box = list(map(int, max_face[:4]))
-#        max_x = int(max_face[FACE.X])
-#        max_y = int(max_face[FACE.Y])
-#        max_rmouth_x = int(max_face[FACE.RMOUTH_X])
-#        max_rmouth_y = int(max_face[FACE.RMOUTH_Y])
-#        max_lmouth_x = int(max_face[FACE.LMOUTH_X])
-#        max_lmouth_y = int(max_face[FACE.LMOUTH_Y])
+        box = list(map(int, max_face[:4]))
+        max_x = int(max_face[FACE.X])
+        max_y = int(max_face[FACE.Y])
+        max_rmouth_x = int(max_face[FACE.RMOUTH_X])
+        max_rmouth_y = int(max_face[FACE.RMOUTH_Y])
+        max_lmouth_x = int(max_face[FACE.LMOUTH_X])
+        max_lmouth_y = int(max_face[FACE.LMOUTH_Y])
 
-#        cv.rectangle(image, box, COLOR.BLUE, vlog_line)
-#        cv.putText(image, str(face_trusty), (max_x, (max_y - 8)), 
-#                    cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 3)
-#        cv.circle(image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
-#        cv.circle(image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
-#    # Draw total result
-#    cv.putText(image, ("Result=" + str(result)), (32, 64), 
-#                cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
-#    write_image(image_path, image)
+        cv.rectangle(image, box, COLOR.BLUE, vlog_line)
+        cv.putText(image, str(face_trusty), (max_x, (max_y - 8)), 
+                    cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 3)
+        cv.circle(image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
+        cv.circle(image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
+    # Draw total result
+    cv.putText(image, ("Result=" + str(result)), (32, 64), 
+                cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
+    write_image(image_path, image)
 
 # Show histgram
 #if (args['graph']) :

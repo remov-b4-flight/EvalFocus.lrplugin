@@ -68,7 +68,6 @@ def get_sobel_edges(image, ddepth, kernel) :
     return edges
 
 # Main
-result = 0
 
 # Option parse
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
@@ -88,10 +87,7 @@ args = vars(ap.parse_args())
 verbose = args["v"]
 lap_kernel = args["k"]
 
-if args["d"] == 32 :
-    lap_ddepth = cv.CV_32F
-else :
-    lap_ddepth = cv.CV_8U
+lap_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U 
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
@@ -190,7 +186,7 @@ for face in faces :
            cv.imshow("Edges", edge_image)
            cv.waitKey(VISUAL_WAIT)
 
-    # Get result
+    # Get histogram
     hist, bins = np.histogram(edge_image, bins = HIST_BINS, range = (0,255))
     power_length = len(hist)
 
@@ -227,7 +223,7 @@ for face in faces :
     if (verbose >= 1) : 
         print("power=", power, end=", ")
 
-    # If no faces not detected results deducted.
+    # If no faces, detected results are deducted.
     if (faces_count != 0) : 
         if (face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
             power *= MOUTH_DEDUCT
@@ -238,7 +234,7 @@ for face in faces :
 
     if (verbose >= 1 and faces_count >= 1) : 
         print("trusty=", face_trusty, end=", ")
-    if (max_power < 0 or (power > max_power and power_end > POWER_END_GATE)) : 
+    if (power > max_power and power_end > POWER_END_GATE) : 
         max_power = power
         max_index = count
     if (verbose >= 1) : 
@@ -247,21 +243,25 @@ for face in faces :
     count += 1
 # End loop of faces
 
-max_face = faces[max_index]
-if (verbose >= 3) : 
-    print("width=", max_face[FACE.WIDTH])
-    print("height=", max_face[FACE.HEIGHT])
-pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // PIXEL10K
+# Evaluate result
+if (max_power < 0) :
+    result = 0
+else :
+    max_face = faces[max_index]
+    if (verbose >= 3) : 
+        print("width=", max_face[FACE.WIDTH])
+        print("height=", max_face[FACE.HEIGHT])
+    pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // PIXEL10K
 
-#round up for too small face
-if (pixel_count == 0) :
-    pixel_count = 1
+    #round up for too small face
+    if (pixel_count == 0) :
+        pixel_count = 1
 
-power_kpixel = max_power // pixel_count
-if (verbose >= 2) :
-    print("10Kpixels=", pixel_count)
-    print("power/10Kpixels=", power_kpixel)
-result = int(power_kpixel)
+    power_kpixel = max_power // pixel_count
+    if (verbose >= 2) :
+        print("10Kpixels=", pixel_count)
+        print("power/10Kpixels=", power_kpixel)
+    result = int(power_kpixel)
 
 # Make image log
 if (args["vlog"]) :

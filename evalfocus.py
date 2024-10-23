@@ -88,10 +88,6 @@ filter_kernel = args["k"]
 filter_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U 
 force_sobel = args["sobel"]
 
-# Temporal avoidance
-if (args["graph"] == True) :
-    import matplotlib.pyplot as plt
-
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
 
@@ -294,12 +290,13 @@ if (args["vlog"]) :
     write_image(image_path, image)
 
 # Show histgram
-#if (args['graph']) :
-#    (_, base_name) = os.path.split(image_path)
-#    hist_title = str(max_power) + ' / ' + base_name
-#    plt.stairs(hist, bins, fill = True)
-#    plt.title(hist_title)
-#    plt.show()
+if (args['graph'] == True) :
+    import matplotlib.pyplot as plt
+    (_, base_name) = os.path.split(image_path)
+    hist_title = str(max_power) + ' / ' + base_name
+    plt.stairs(hist, bins, fill = True)
+    plt.title(hist_title)
+    plt.show()
 
 # Output result to stdout
 if (verbose >= 1) : 

@@ -8,7 +8,6 @@ import cv2 as cv
 import os
 import sys
 import numpy as np
-#import matplotlib.pyplot as plt
 
 # Constants
 PIXEL10K = 10000
@@ -73,27 +72,31 @@ def get_sobel_edges(image, ddepth, kernel) :
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.",)
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
-ap.add_argument("-k", help = "laplacian kernel", type = int, choices = [1, 3, 5, 7, 9], default = 5)
-ap.add_argument("-d", help = "laplacian depth", type = int, choices = [8, 32], default = 8)
+ap.add_argument("-k", help = "filter kernel", type = int, choices = [1, 3, 5, 7, 9], default = 5)
+ap.add_argument("-d", help = "filter depth", type = int, choices = [8, 32], default = 8)
+ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
-ap.add_argument("-sr", "--skip_resize", help = "skip resize", action = 'store_true', default = False)
 ap.add_argument("-o", help = "output raw result to file", default = "")
-#ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
-ap.add_argument("-lap", "--laplacian", help = "show laplacian", action = 'store_true', default = False)
+ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
+ap.add_argument("-eg", "--edge", help = "show edges", action = 'store_true', default = False)
 ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
 # Additional parameter parse
 verbose = args["v"]
-lap_kernel = args["k"]
+filter_kernel = args["k"]
+filter_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U 
+force_sobel = args["sobel"]
 
-lap_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U 
+# Temporal avoidance
+if (args["graph"] == True) :
+    import matplotlib.pyplot as plt
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
 
 if (verbose >= 4) : 
-    print("model =", fd_model)
+    print("model=", fd_model)
 
 image_path = args["file"]
 
@@ -102,7 +105,7 @@ if (os.path.isfile(fd_model) != True) :
     sys.exit(ERROR_CANTOPEN)
 
 if (verbose >= 1) : 
-    print("input image =", image_path)
+    print("input image=", image_path)
 # Read image
 original_image = cv.imread(image_path)
 if original_image is None :
@@ -119,7 +122,7 @@ image = cv.resize(original_image, None, fx=factor, fy=factor,
                   interpolation=cv.INTER_NEAREST_EXACT)
 
 if (verbose >= 2) : 
-    print("shape =", image.shape)
+    print("shape=", image.shape)
 
 # Detecting faces.
 fd = cv.FaceDetectorYN_create(fd_model, "", (0,0))
@@ -129,7 +132,7 @@ _, faces = fd.detect(image)
 
 faces_count = len(faces) if faces is not None else 0
 if (verbose >= 1) : 
-    print("faces =", faces_count)
+    print("faces=", faces_count)
 
 # If any face not found, process entire image.
 faces = faces if faces is not None else [[
@@ -175,14 +178,14 @@ for face in faces :
     # Grayscale conversion
     gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
     # Find edges
-    if (faces_count == 0) : 
+    if (faces_count == 0 or force_sobel == True) : 
         # Sobel filter
-        edge_image = get_sobel_edges(gray, lap_ddepth, lap_kernel)
+        edge_image = get_sobel_edges(gray, filter_ddepth, filter_kernel)
     else :
         # Laplacian conversion
-        edge_image = cv.Laplacian(gray, lap_ddepth, lap_kernel)
+        edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
 
-    if (args["laplacian"] and (faces_count >= 1 or verbose >= 3)) :
+    if (args["edge"]) :
            cv.imshow("Edges", edge_image)
            cv.waitKey(VISUAL_WAIT)
 
@@ -248,16 +251,18 @@ if (max_power < 0) :
     result = 0
 else :
     max_face = faces[max_index]
+    max_width = int(max_face[FACE.WIDTH])
+    max_height = int(max_face[FACE.HEIGHT])
     if (verbose >= 3) : 
-        print("width=", max_face[FACE.WIDTH])
-        print("height=", max_face[FACE.HEIGHT])
-    pixel_count = max_face[FACE.WIDTH] * max_face[FACE.HEIGHT] // PIXEL10K
+        print("width=", max_width)
+        print("height=", max_height)
+    pixel_count = max_width * max_height / PIXEL10K
 
     #round up for too small face
     if (pixel_count == 0) :
         pixel_count = 1
 
-    power_kpixel = max_power // pixel_count
+    power_kpixel = max_power / pixel_count
     if (verbose >= 2) :
         print("10Kpixels=", pixel_count)
         print("power/10Kpixels=", power_kpixel)

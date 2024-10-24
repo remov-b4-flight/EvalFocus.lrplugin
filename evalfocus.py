@@ -309,7 +309,7 @@ if (len(args["o"]) != 0) :
         f.write(str(result))
 
 # Return value to OS
-if (result > MAX_RESULT):
+if (result > MAX_RESULT) :
     result = MAX_RESULT
 elif (0 <= result < MIN_RESULT) : 
     result = MIN_RESULT

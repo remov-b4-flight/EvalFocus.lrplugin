@@ -180,6 +180,10 @@ for face in faces :
     else :
         # Laplacian conversion
         edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
+#        edge_mean = np.mean(edge_image ** 2)
+#    
+#    if(verbose >= 3) : 
+#        print("mean=", edge_mean, end=",") 
 
     if (args["edge"]) :
            cv.imshow("Edges", edge_image)

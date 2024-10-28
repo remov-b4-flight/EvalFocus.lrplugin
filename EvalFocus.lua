@@ -52,38 +52,38 @@ LrTasks.startAsyncTask( function ()
 		pgtick = 25
 	end
 	--loops photos in selected
-	CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
-		for i,PhotoIt in ipairs(SelectedPhotos) do
-			if (PhotoIt:getRawMetadata('fileFormat') == 'JPG') then 
-				local FilePath = PhotoIt:getRawMetadata('path')
-				local TempPath = os.tmpname()
-				local CommandLine = python .. SEP .. script_path .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath
+	for i,PhotoIt in ipairs(SelectedPhotos) do
+		if (PhotoIt:getRawMetadata('fileFormat') == 'JPG') then 
+			local FilePath = PhotoIt:getRawMetadata('path')
+			local TempPath = os.tmpname()
+			local CommandLine = python .. SEP .. script_path .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath
 --				Logger:info(CommandLine)
-				-- only MSB 8 bits are valid
-				local retval = LrTasks.execute(CommandLine) / 256
-				-- get results to file
-				local contents = LrFileUtils.readFile(TempPath)
-				local value = FOTFOUND
-				if (string.len(contents) > 0) then
-					value = tonumber(contents)
-				end
-				LrFileUtils.delete(TempPath)
---				Logger:info('value=' .. value)
-				if (value >= MINRESULT) then 
+			-- only MSB 8 bits are valid
+			local retval = LrTasks.execute(CommandLine) / 256
+			-- get results to file
+			local contents = LrFileUtils.readFile(TempPath)
+			local value = FOTFOUND
+			if (string.len(contents) > 0) then
+				value = tonumber(contents)
+			end
+			LrFileUtils.delete(TempPath)
+--			Logger:info('value=' .. value)
+			if (value >= MINRESULT) then 
+				CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
 					if (prefs.AutoReject == true and value < prefs.RejectRange) then
 						PhotoIt:setRawMetadata('pickStatus', -1)
 					end
-				end
-			else
---				Logger:info('skip non JPEG file.')
-			end --isVideo
-			if ((i % pgtick) == 0) then 
-				ProgressBar:setPortionComplete(i, countPhotos)
+				end, { timeout = 0.1 } ) --end of withWriteAccessDo 					
 			end
-		end --end of for photos loop
-		ProgressBar:done()
-	end, { timeout = 0.1 } ) --end of withWriteAccessDo
+		else
+--			Logger:info('skip non JPEG file.')
+		end --isVideo
+		if ((i % pgtick) == 0) then 
+			ProgressBar:setPortionComplete(i, countPhotos)
+		end
+	end --end of for photos loop
+	ProgressBar:done()
 	LrSelection.selectNone()
 end ) --end of startAsyncTask function()
 return

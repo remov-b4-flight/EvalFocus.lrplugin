@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/python3
+#!/opt/homebrew/bin/python3.12
 ## 
 # @brief Evaluate focus by OpenCV functions.
 # @author remov_b4_flight
@@ -8,6 +8,8 @@ import cv2 as cv
 import os
 import sys
 import numpy as np
+#import threading as th
+#import matplotlib as plt
 
 # Constants
 PIXEL10K = 10000
@@ -66,6 +68,20 @@ def get_sobel_edges(image, ddepth, kernel) :
     edges = cv.addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0)
     return edges
 
+def get_foulier_power(image) :
+    f = np.fft.fft2(image)
+    fshift = np.fft.fftshift(f)
+    mag = 20 * np.log(np.abs(fshift))
+    mw, mh = mag.shape
+    mcx = mw // 2
+    mcy = mh // 2
+    fx = mcx // 5
+    fy = mcy // 5 
+    #mask low frequency area
+    mag[0 : mw, mcy-fy : mcy+fy] = 0
+    mag[mcx-fx : mcx+fx, 0 : mh] = 0 
+    return int(np.sum(mag))
+
 # Main
 
 # Option parse
@@ -121,9 +137,8 @@ if (verbose >= 2) :
     print("shape=", image.shape)
 
 # Detecting faces.
-fd = cv.FaceDetectorYN_create(fd_model, "", (0,0))
 height, width, _ = image.shape
-fd.setInputSize((width, height))
+fd = cv.FaceDetectorYN_create(fd_model, "", (width, height))
 _, faces = fd.detect(image)
 
 faces_count = len(faces) if faces is not None else 0
@@ -144,6 +159,7 @@ faces = faces if faces is not None else [[
 count = 0
 max_power = -1
 max_index = -1
+max_foulier = -1
 
 # Loop with detected faces
 for face in faces :
@@ -180,10 +196,14 @@ for face in faces :
     else :
         # Laplacian conversion
         edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
-#        edge_mean = np.mean(edge_image ** 2)
-#    
-#    if(verbose >= 3) : 
-#        print("mean=", edge_mean, end=",") 
+    
+    edge_mean = np.mean(edge_image ** 2)
+    foulier_power = get_foulier_power(gray)
+
+    if(verbose >= 3) : 
+#       print("mean=", int(edge_mean), end=", ") 
+#       print("laplacian.var()=", int(edge_image.var()), end=", ")
+        print("foulier=", foulier_power, end=", ")
 
     if (args["edge"]) :
            cv.imshow("Edges", edge_image)
@@ -196,7 +216,7 @@ for face in faces :
     # Determine power calc. start/end
     power_start = 0
     power_end = 0
-
+    # Seeking power_start and power end
     for i in range((power_length - 1), 0, -1) :
         if (power_end == 0 and hist[i] != 0) :
             power_end = i
@@ -218,10 +238,7 @@ for face in faces :
     # Calc. the power
     power = 0
     for i in range(power_start, power_end + 1) :
-        if (hist[i] == 0) : 
-            power *= 0.9
-        else :
-            power += hist[i] * i
+        power += hist[i] * i
 
     if (verbose >= 1) : 
         print("power=", power, end=", ")
@@ -237,16 +254,18 @@ for face in faces :
 
     if (verbose >= 1 and faces_count >= 1) : 
         print("trusty=", face_trusty, end=", ")
+    # freshing max_power
     if (power > max_power and power_end > POWER_END_GATE) : 
         max_power = power
         max_index = count
+        max_foulier = foulier_power
     if (verbose >= 1) : 
         print()
 
     count += 1
 # End loop of faces
 
-# Evaluate result
+# Evaluate face has max_power
 if (max_power < 0) :
     result = 0
 else :
@@ -263,9 +282,13 @@ else :
         pixel_count = 1
 
     power_kpixel = max_power / pixel_count
+    foulier_kpixel = max_foulier / pixel_count
     if (verbose >= 2) :
+        print("max_power=", max_power)
         print("10Kpixels=", pixel_count)
         print("power/10Kpixels=", power_kpixel)
+    if (verbose >= 3) :
+        print("foulier/10Kpixels=", foulier_kpixel)
     result = int(power_kpixel)
 
 # Make image log

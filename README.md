@@ -1,9 +1,8 @@
 # EvalFocus.lrplugin
-EvalFocus-plugin
 Evalfocus is Adobe Lightroom Classic plugin that evaluate correct focus on JPEG photo.
-Mainly developed for Mac environment. I have no Windows environment.
+Mainly developed for macOS environment. I have no Windows environment.
 ## pre-requesties
-* MacOS
+* macOS
 * Lightroom
 * homebrew
 * OpenCV

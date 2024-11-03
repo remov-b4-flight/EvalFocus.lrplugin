@@ -19,7 +19,7 @@ SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
 HIST_BINS = 32
-POWER_END_GATE = ((HIST_BINS/8)*3)
+POWER_END_GATE = ((HIST_BINS / 8) * 3)
 HIST_RISE = 2
 POWER_RANGE = 6
 MOUTH_DEDUCT = 0.75
@@ -61,10 +61,8 @@ def get_resize_factor(long_side) :
         return 1
 
 def get_sobel_edges(image, ddepth, kernel) :
-    sobel_x = cv.Sobel(image, ddepth, 1, 0, kernel)
-    sobel_y = cv.Sobel(image, ddepth, 0, 1, kernel)
-    sobel_x = cv.convertScaleAbs(sobel_x)
-    sobel_y = cv.convertScaleAbs(sobel_y)
+    sobel_x = cv.convertScaleAbs(cv.Sobel(image, ddepth, 1, 0, kernel))
+    sobel_y = cv.convertScaleAbs(cv.Sobel(image, ddepth, 0, 1, kernel))
     edges = cv.addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0)
     return edges
 

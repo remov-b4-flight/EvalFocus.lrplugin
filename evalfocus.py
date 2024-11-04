@@ -129,7 +129,7 @@ if original_image is None :
 
 # Image resizing fot face detect.
 orig_height, orig_width, _ = original_image.shape
-long_side = max(orig_height,orig_width)
+long_side = max(orig_height, orig_width)
 factor = get_resize_factor(long_side)
 if (verbose >= 2) : 
     print("resize factor=", factor)
@@ -194,7 +194,7 @@ for face in faces :
     gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
     foulier_power = get_foulier_power(gray)
 
-    # Find edges
+    # Make edge image
     if (force_lap == True) : 
         # Laplacian conversion
        edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
@@ -212,7 +212,7 @@ for face in faces :
            cv.imshow("Edges", edge_image)
            cv.waitKey(VISUAL_WAIT)
 
-    # Get histogram
+    # Get histogram from edge image
     hist, bins = np.histogram(edge_image, bins = HIST_BINS, range = (0,255))
     power_length = len(hist)
 
@@ -221,9 +221,11 @@ for face in faces :
     power_end = 0
     # Seeking power_start and power end
     for i in range((power_length - 1), 0, -1) :
+        # Find first point of hist[] not zero
         if (power_end == 0 and hist[i] != 0) :
             power_end = i
-        else  :
+        else :
+            # Find hist[] rising point
             if (power_end != 0 and hist[i] != 0 and (hist[i - 1] / hist[i]) > HIST_RISE) :
                 power_start = i
     # Limit power_start 

@@ -18,13 +18,16 @@ MAX_RESULT = 255
 SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
+# Constants for power estimation
 HIST_BINS = 32
-POWER_END_GATE = ((HIST_BINS / 8) * 3)
+POWER_END_GATE = ((HIST_BINS // 8) * 3)
 HIST_RISE = 2
 POWER_RANGE = 6
 MOUTH_DEDUCT = 0.75
 EYE_DEDUCT = 0.85
 FACE_DEDUCT = 0.95
+# Mask area for foulier transform 
+FOULIER_MASK = 8
 # Error code
 ERROR_CANTOPEN = 2
 # FaceDetectorYN result index
@@ -53,7 +56,7 @@ def write_image(file_path, image, sub_dir="vlog") :
     cv.imwrite(export_file_path, image)
 
 def get_resize_factor(long_side) :
-    if (BIG_LS < long_side ) :
+    if (BIG_LS < long_side) :
         return (1/4)
     elif (SMALL_LS < long_side <= BIG_LS) :
         return (1/2)
@@ -73,12 +76,12 @@ def get_foulier_power(image) :
     mw, mh = mag.shape
     mcx = mw // 2
     mcy = mh // 2
-    fx = mcx // 5
-    fy = mcy // 5 
+    fx = mcx // FOULIER_MASK
+    fy = mcy // FOULIER_MASK
     #mask low frequency area
-    mag[0 : mw, mcy-fy : mcy+fy] = 0
-    mag[mcx-fx : mcx+fx, 0 : mh] = 0 
-    return int(np.sum(mag))
+    mag[0+fx : mw-fx, mcy-fy : mcy+fy] = 0
+    mag[mcx-fx : mcx+fx, 0+fy : mh-fy] = 0 
+    return np.sum(mag)
 
 # Main
 
@@ -88,7 +91,8 @@ ap.add_argument("file", help = "Image file to process.",)
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
 ap.add_argument("-k", help = "filter kernel", type = int, choices = [1, 3, 5, 7, 9], default = 5)
 ap.add_argument("-d", help = "filter depth", type = int, choices = [8, 32], default = 8)
-ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = False)
+#ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = True)
+ap.add_argument("-la", "--laplacian", help = "force laplacian", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-o", help = "output raw result to file", default = "")
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
@@ -100,7 +104,8 @@ args = vars(ap.parse_args())
 verbose = args["v"]
 filter_kernel = args["k"]
 filter_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U 
-force_sobel = args["sobel"]
+#force_sobel = args["sobel"]
+force_lap = args["laplacian"]
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
@@ -187,21 +192,21 @@ for face in faces :
 
     # Grayscale conversion
     gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
-    # Find edges
-    if (faces_count == 0 or force_sobel == True) : 
-        # Sobel filter
-        edge_image = get_sobel_edges(gray, filter_ddepth, filter_kernel)
-    else :
-        # Laplacian conversion
-        edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
-    
-    edge_mean = np.mean(edge_image ** 2)
     foulier_power = get_foulier_power(gray)
 
-    if(verbose >= 3) : 
+    # Find edges
+    if (force_lap == True) : 
+        # Laplacian conversion
+       edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
+    else :
+        # Sobel filter
+        edge_image = get_sobel_edges(gray, filter_ddepth, filter_kernel)
+
+    if (verbose >= 3) : 
+#       edge_mean = np.mean(edge_image ** 2)
 #       print("mean=", int(edge_mean), end=", ") 
 #       print("laplacian.var()=", int(edge_image.var()), end=", ")
-        print("foulier=", foulier_power, end=", ")
+        print("foulier=", int(foulier_power), end=", ")
 
     if (args["edge"]) :
            cv.imshow("Edges", edge_image)
@@ -230,7 +235,7 @@ for face in faces :
         print("hist=", hist)
     if (verbose >= 3) : 
         print("power_start=", power_start, end=", ")
-        print("power_end=", power_end)
+        print("power_end=", power_end, end=", ")
         print("hist=", hist[ power_start : power_end + 1], end=", ")
 
     # Calc. the power

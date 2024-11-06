@@ -28,6 +28,8 @@ EYE_DEDUCT = 0.85
 FACE_DEDUCT = 0.95
 # Mask area for foulier transform 
 FOULIER_MASK = 8
+#Tolerance in canny filter
+SIGMA = 0.33
 # Error code
 ERROR_CANTOPEN = 2
 # FaceDetectorYN result index
@@ -67,6 +69,13 @@ def get_sobel_edges(image, ddepth, kernel) :
     sobel_x = cv.convertScaleAbs(cv.Sobel(image, ddepth, 1, 0, kernel))
     sobel_y = cv.convertScaleAbs(cv.Sobel(image, ddepth, 0, 1, kernel))
     edges = cv.addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0)
+    return edges
+
+def get_canny_edges(image, sigma) :
+    median_value = np.median(image)
+    min_value = int( max(0, (1.0-sigma) * median_value) )
+    max_value = int( max(255, (1.0+sigma) * median_value) )
+    edges = cv.Canny(image, min_value, max_value)
     return edges
 
 def get_foulier_power(image) :
@@ -200,8 +209,9 @@ for face in faces :
        edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
     else :
         # Sobel filter
-        edge_image = get_sobel_edges(gray, filter_ddepth, filter_kernel)
-
+        #edge_image = get_sobel_edges(gray, filter_ddepth, filter_kernel)
+        # Canny filter
+        edge_image = get_canny_edges(gray,SIGMA)
     if (verbose >= 3) : 
 #       edge_mean = np.mean(edge_image ** 2)
 #       print("mean=", int(edge_mean), end=", ") 

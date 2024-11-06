@@ -28,7 +28,7 @@ EYE_DEDUCT = 0.85
 FACE_DEDUCT = 0.95
 # Mask area for foulier transform 
 FOULIER_MASK = 8
-#Tolerance in canny filter
+# Tolerance for canny filter
 SIGMA = 0.33
 # Error code
 ERROR_CANTOPEN = 2
@@ -100,7 +100,7 @@ ap.add_argument("file", help = "Image file to process.",)
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
 ap.add_argument("-k", help = "filter kernel", type = int, choices = [1, 3, 5, 7, 9], default = 5)
 ap.add_argument("-d", help = "filter depth", type = int, choices = [8, 32], default = 8)
-#ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = True)
+ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = False)
 ap.add_argument("-la", "--laplacian", help = "force laplacian", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-o", help = "output raw result to file", default = "")
@@ -113,8 +113,10 @@ args = vars(ap.parse_args())
 verbose = args["v"]
 filter_kernel = args["k"]
 filter_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U 
-#force_sobel = args["sobel"]
+force_sobel = args["sobel"]
 force_lap = args["laplacian"]
+if (force_sobel == True) :
+    force_lap = False
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
@@ -204,14 +206,13 @@ for face in faces :
     foulier_power = get_foulier_power(gray)
 
     # Make edge image
-    if (force_lap == True) : 
-        # Laplacian conversion
-       edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
-    else :
+    if (faces_count == 0 or force_sobel == True) : 
         # Sobel filter
-        #edge_image = get_sobel_edges(gray, filter_ddepth, filter_kernel)
-        # Canny filter
-        edge_image = get_canny_edges(gray,SIGMA)
+        edge_image = get_sobel_edges(gray, filter_ddepth, filter_kernel)
+    else :
+        # Laplacian conversion
+        edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
+
     if (verbose >= 3) : 
 #       edge_mean = np.mean(edge_image ** 2)
 #       print("mean=", int(edge_mean), end=", ") 

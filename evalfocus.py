@@ -20,7 +20,9 @@ BIG_LS = 4800
 VISUAL_WAIT = 2000
 # Constants for power estimation
 HIST_BINS = 32
+MAX_HIST = (HIST_BINS - 1)
 POWER_END_GATE = ((HIST_BINS // 8) * 3)
+POWER_END_DESCEND = ((HIST_BINS // 8) * 6)
 HIST_RISE = 2
 POWER_RANGE = 6
 MOUTH_DEDUCT = 0.75
@@ -257,8 +259,14 @@ for face in faces :
     for i in range(power_start, power_end + 1) :
         power += hist[i] * i
 
-    if (verbose >= 1) : 
-        print("power=", power, end=", ")
+    if (power_end == MAX_HIST) :
+        power *= 1.2
+    else : 
+        if (power_end == MAX_HIST - 1) :
+            power *= 1.1
+        else : 
+            if (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
+                power *= 0.8
 
     # If no faces, detected results are deducted.
     if (faces_count != 0) : 
@@ -267,7 +275,8 @@ for face in faces :
         if (face_reye_x <= 0 and face_leye_x <= 0) : 
             power *= EYE_DEDUCT
 
-    power = int(power)
+    if (verbose >= 1) : 
+        print("power=", power, end=", ")
 
     if (verbose >= 1 and faces_count >= 1) : 
         print("trusty=", face_trusty, end=", ")

@@ -180,7 +180,7 @@ for face in faces :
 
     if (verbose >= 1) : 
         print("area", count, end=": ")
-    if (verbose >= 4) :
+    if (verbose >= 5) :
         print(face)
     face_rmouth_x = int(face[FACE.RMOUTH_X])
     face_lmouth_x = int(face[FACE.LMOUTH_X])
@@ -198,7 +198,7 @@ for face in faces :
     face_y2 = face_y1 + int(face[FACE.HEIGHT])
     face_image = image[face_y1 : face_y2,
                         face_x1 : face_x2]
-    if (verbose >= 4) :
+    if (verbose >= 5) :
         print ("face x1={0},x2={1},y1={2},y2={3}".format(face_x1,face_x2,face_y1,face_y2))
 
     # Grayscale conversion
@@ -206,7 +206,7 @@ for face in faces :
     foulier_power = get_foulier_power(gray)
 
     # Make edge image
-    if (faces_count == 0 or force_sobel == True) : 
+    if (force_sobel == True) : 
         # Sobel filter
         edge_image = get_sobel_edges(gray, filter_ddepth, filter_kernel)
     else :
@@ -243,13 +243,14 @@ for face in faces :
     if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
         power_start = power_end - POWER_RANGE + 1
 
-    if (verbose >= 4) :
-        print()
-        print("hist=", hist)
     if (verbose >= 3) : 
         print("power_start=", power_start, end=", ")
         print("power_end=", power_end, end=", ")
-        print("hist=", hist[ power_start : power_end + 1], end=", ")
+        if (verbose >= 4) :
+            print()
+            print("hist=", hist)
+        else : 
+            print("hist=", hist[ power_start : power_end + 1], end=", ")
 
     # Calc. the power
     power = 0
@@ -305,7 +306,7 @@ else :
         print("power/10Kpixels=", power_kpixel)
     if (verbose >= 3) :
         print("foulier/10Kpixels=", foulier_kpixel)
-    result = int(power_kpixel)
+    result = int(round(power_kpixel, 1))
 
 # Make image log
 if (args["vlog"]) :
@@ -343,8 +344,9 @@ if (args['graph'] == True) :
 
 # Output result to stdout
 if (verbose >= 1) : 
-    print("result=", end="")
-print(result)
+    print("result=", result)
+else : 
+    print(result)
 
 # raw result output to file
 if (len(args["o"]) != 0) :

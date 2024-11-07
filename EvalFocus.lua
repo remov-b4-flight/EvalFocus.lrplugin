@@ -53,11 +53,12 @@ LrTasks.startAsyncTask( function ()
 	end
 	--loops photos in selected
 	for i,PhotoIt in ipairs(SelectedPhotos) do
-		if (PhotoIt:getRawMetadata('fileFormat') == 'JPG') then 
+		if (PhotoIt:getRawMetadata('fileFormat') == 'JPG' and PhotoIt:getRawMetadata('fileSize') ~= nil ) then 
 			local FilePath = PhotoIt:getRawMetadata('path')
 			local TempPath = os.tmpname()
-			local CommandLine = python .. SEP .. script_path .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath
---				Logger:info(CommandLine)
+--			local CommandLine = python .. SEP .. script_path .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath
+			local CommandLine = python .. SEP .. script_path .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath .. SEP .. '-vvvv >> ' .. _PLUGIN.path .. '/evalfocus.log'
+--			Logger:info(CommandLine)
 			-- only MSB 8 bits are valid
 			local retval = LrTasks.execute(CommandLine) / 256
 			-- get results to file

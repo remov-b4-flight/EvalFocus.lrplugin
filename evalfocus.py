@@ -123,7 +123,7 @@ if (force_sobel == True) :
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
 
-if (verbose >= 4) : 
+if (verbose >= 5) : 
     print("model=", fd_model)
 
 image_path = args["file"]

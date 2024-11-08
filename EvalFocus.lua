@@ -22,10 +22,16 @@ local prefs = import 'LrPrefs'.prefsForPlugin()
 --Constants
 local SEP = ' '
 local OUTOP = '-o'
-local script = '/evalfocus.py'
-local script_path = _PLUGIN.path .. script
+local SCRIPT = '/evalfocus.py'
+local SCRIPT_PATH = _PLUGIN.path .. SCRIPT
 local MINRESULT = 5
 local NOTFOUND = 2
+--For python logfile
+local REDIR = '>>'
+local LOG_OPTION = '-vvvv'
+local LOG_FILE = '/evalfocus.log'
+local LOGPATH = _PLUGIN.path .. LOG_FILE
+local LOG_CMDLINE = LOG_OPTION .. SEP .. REDIR .. SEP .. LOGPATH
 
 if (prefs.AutoReject == nil) then
 	prefs.AutoReject = false
@@ -47,7 +53,7 @@ LrTasks.startAsyncTask( function ()
 	local c = math.log(countPhotos, 10)
 	local pgtick = 10
 	if ( c > 3.0 ) then
-		pgtick = 100
+		pgtick = 50
 	elseif (c > 2.6) then
 		pgtick = 25
 	end
@@ -56,8 +62,7 @@ LrTasks.startAsyncTask( function ()
 		if (PhotoIt:getRawMetadata('fileFormat') == 'JPG' and PhotoIt:getRawMetadata('fileSize') ~= nil ) then 
 			local FilePath = PhotoIt:getRawMetadata('path')
 			local TempPath = os.tmpname()
---			local CommandLine = python .. SEP .. script_path .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath
-			local CommandLine = python .. SEP .. script_path .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath .. SEP .. '-vvvv >> ' .. _PLUGIN.path .. '/evalfocus.log'
+			local CommandLine = python .. SEP .. SCRIPT_PATH .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath
 --			Logger:info(CommandLine)
 			-- only MSB 8 bits are valid
 			local retval = LrTasks.execute(CommandLine) / 256

@@ -18,6 +18,8 @@ MAX_RESULT = 255
 SMALL_LS = 2400
 BIG_LS = 4800
 VISUAL_WAIT = 2000
+# Constants for face recognition 
+SCORE_THRESHOLD = 0.75
 # Constants for power estimation
 HIST_BINS = 32
 MAX_HIST = (HIST_BINS - 1)
@@ -25,15 +27,15 @@ POWER_END_GATE = ((HIST_BINS // 8) * 3)
 POWER_END_DESCEND = ((HIST_BINS // 8) * 6)
 HIST_RISE = 2
 POWER_RANGE = 6
-MOUTH_DEDUCT = 0.75
-EYE_DEDUCT = 0.85
-FACE_DEDUCT = 0.95
+MOUTH_DEDUCT = 0.8
+EYE_DEDUCT = 0.88
 # Mask area for foulier transform 
 FOULIER_MASK = 8
 # Tolerance for canny filter
 SIGMA = 0.33
 # Error code
 ERROR_CANTOPEN = 2
+
 # FaceDetectorYN result index
 class FACE :
     X = 0 ; Y = 1
@@ -43,8 +45,9 @@ class FACE :
     NOSE_X = 8 ; NOSE_Y = 9
     RMOUTH_X = 10 ; RMOUTH_Y = 11
     LMOUTH_X = 12 ; LMOUTH_Y = 13
-    TRUSTY = 14
+    SCORE = 14
 
+# Color constants for vlog
 class COLOR :
     RED = (0, 0, 255) ; BLUE = (255, 0, 0) ; GREEN = (0, 255, 0)
     MAGENTA = (255, 0, 255) ; CYAN = (255, 255, 0) ; YELLOW = (0, 255, 255)
@@ -154,7 +157,7 @@ if (verbose >= 2) :
 
 # Detecting faces.
 height, width, _ = image.shape
-fd = cv.FaceDetectorYN_create(fd_model, "", (width, height))
+fd = cv.FaceDetectorYN_create(fd_model, "", (width, height), SCORE_THRESHOLD)
 _, faces = fd.detect(image)
 
 faces_count = len(faces) if faces is not None else 0
@@ -192,7 +195,7 @@ for face in faces :
     face_reye_x = int(face[FACE.REYE_X])
     if (faces_count >= 1 and verbose >= 2) :
         print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
-    face_trusty = round(face[FACE.TRUSTY], 2) if faces_count >= 1 else 0.0
+    face_score = round(face[FACE.SCORE], 2) if faces_count >= 1 else 0.0
     # Crop face
     face_x1 = 0 if (face[FACE.X] < 0) else int(face[FACE.X]) 
     face_x2 = face_x1 + int(face[FACE.WIDTH])
@@ -205,7 +208,6 @@ for face in faces :
 
     # Grayscale conversion
     gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
-    foulier_power = get_foulier_power(gray)
 
     # Make edge image
     if (force_sobel == True) : 
@@ -214,12 +216,6 @@ for face in faces :
     else :
         # Laplacian conversion
         edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
-
-    if (verbose >= 3) : 
-#       edge_mean = np.mean(edge_image ** 2)
-#       print("mean=", int(edge_mean), end=", ") 
-#       print("laplacian.var()=", int(edge_image.var()), end=", ")
-        print("foulier=", int(foulier_power), end=", ")
 
     if (args["edge"]) :
            cv.imshow("Edges", edge_image)
@@ -279,12 +275,11 @@ for face in faces :
         print("power=", power, end=", ")
 
     if (verbose >= 1 and faces_count >= 1) : 
-        print("trusty=", face_trusty, end=", ")
+        print("score=", face_score, end=", ")
     # freshing max_power
     if (power > max_power and power_end > POWER_END_GATE) : 
         max_power = power
         max_index = count
-        max_foulier = foulier_power
     if (verbose >= 1) : 
         print()
 
@@ -298,23 +293,21 @@ else :
     max_face = faces[max_index]
     max_width = int(max_face[FACE.WIDTH])
     max_height = int(max_face[FACE.HEIGHT])
+    max_score = max_face[FACE.SCORE]
+    max_power *= (max_score ** 2)
     if (verbose >= 3) : 
-        print("width=", max_width)
-        print("height=", max_height)
+        print("max width={0}, height={1}".format(max_width, max_height))
     pixel_count = max_width * max_height / PIXEL10K
 
-    #round up for too small face
-    if (pixel_count == 0) :
+    # round up for too small face
+    if (pixel_count < 1) :
         pixel_count = 1
 
     power_kpixel = max_power / pixel_count
-    foulier_kpixel = max_foulier / pixel_count
     if (verbose >= 2) :
-        print("max_power=", max_power)
         print("10Kpixels=", pixel_count)
+        print("max power=", max_power)
         print("power/10Kpixels=", power_kpixel)
-    if (verbose >= 3) :
-        print("foulier/10Kpixels=", foulier_kpixel)
     result = int(round(power_kpixel, 1))
 
 # Make image log
@@ -333,7 +326,7 @@ if (args["vlog"]) :
         max_lmouth_y = int(max_face[FACE.LMOUTH_Y])
 
         cv.rectangle(image, box, COLOR.BLUE, vlog_line)
-        cv.putText(image, str(face_trusty), (max_x, (max_y - 8)), 
+        cv.putText(image, str(face_score), (max_x, (max_y - 8)), 
                     cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 3)
         cv.circle(image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
         cv.circle(image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)

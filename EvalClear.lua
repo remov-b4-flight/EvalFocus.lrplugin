@@ -14,7 +14,7 @@ local CurrentCatalog = LrApplication.activeCatalog()
 --Main part of this plugin.
 LrTasks.startAsyncTask( function ()
 	local ProgressBar = LrProgress(
-		{title = PluginTitle .. ' Clearing..'}
+		{title = PluginTitle .. ' is Clearing..'}
 	)
 	local TargetPhoto = CurrentCatalog:getTargetPhoto()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()

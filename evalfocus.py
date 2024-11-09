@@ -17,7 +17,7 @@ MIN_RESULT = 5
 MAX_RESULT = 255
 SMALL_LS = 2400
 BIG_LS = 4800
-VISUAL_WAIT = 2000
+VISUAL_WAIT = 3000
 # Constants for face recognition 
 SCORE_THRESHOLD = 0.75
 # Constants for power estimation

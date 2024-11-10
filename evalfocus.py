@@ -250,11 +250,11 @@ for face in faces :
         else : 
             print("hist=", hist[ power_start : power_end + 1], end=", ")
 
-    # Calc. the power
+    # Calculate the power
     power = 0
     for i in range(power_start, power_end + 1) :
         power += hist[i] * i
-
+    # Power deducted by dispartion of histgrom
     if (power_end == MAX_HIST) :
         power *= 1.2
     else : 
@@ -263,8 +263,7 @@ for face in faces :
         else : 
             if (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
                 power *= 0.8
-
-    # If no faces, detected results are deducted.
+    # Power deducted by face detecting result
     if (faces_count != 0) : 
         if (face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
             power *= MOUTH_DEDUCT
@@ -276,7 +275,7 @@ for face in faces :
 
     if (verbose >= 1 and faces_count >= 1) : 
         print("score=", face_score, end=", ")
-    # freshing max_power
+    # Flashing max_power
     if (power > max_power and power_end > POWER_END_GATE) : 
         max_power = power
         max_index = count

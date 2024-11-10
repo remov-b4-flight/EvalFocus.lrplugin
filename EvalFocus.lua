@@ -68,13 +68,13 @@ LrTasks.startAsyncTask( function ()
 			local retval = LrTasks.execute(CommandLine) / 256
 			-- get results to file
 			local contents = LrFileUtils.readFile(TempPath)
-			local value = FOTFOUND
+			local value = 0
 			if (string.len(contents) > 0) then
 				value = tonumber(contents)
 			end
 			LrFileUtils.delete(TempPath)
 --			Logger:info('value=' .. value)
-			if (value >= MINRESULT) then 
+			if (retval >= MINRESULT) then 
 				CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
 					if (prefs.AutoReject == true and value < prefs.RejectRange) then

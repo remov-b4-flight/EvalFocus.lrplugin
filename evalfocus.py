@@ -23,7 +23,7 @@ VISUAL_WAIT = 3000
 SCORE_THRESHOLD = 0.75
 # Constants for power estimation
 HIST_BINS = 32
-MAX_HIST = (HIST_BINS - 1)
+MAX_BINS = (HIST_BINS - 1)
 POWER_END_GATE = ((HIST_BINS // 8) * 3)
 POWER_END_DESCEND = ((HIST_BINS // 8) * 6)
 HIST_RISE = 2
@@ -31,7 +31,7 @@ POWER_RANGE = 6
 MOUTH_DEDUCT = 0.8
 EYE_DEDUCT = 0.88
 POWER_POLE = 0.9
-K_ADJSUT = 0.05
+POWER_SLOPE = 0.05
 # Mask area for foulier transform 
 FOULIER_MASK = 8
 # Tolerance for canny filter
@@ -69,7 +69,7 @@ def get_resize_factor(long_side) :
     if (BIG_LS < long_side) :
         return (1/4)
     elif (SMALL_LS < long_side <= BIG_LS) :
-        return (1/4)
+        return (1/2)
     else :
         return 1
 
@@ -111,7 +111,6 @@ ap.add_argument("-d", help = "filter depth", type = int, choices = [8, 32], defa
 ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = False)
 ap.add_argument("-la", "--laplacian", help = "force laplacian", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
-#ap.add_argument("-o", help = "output raw result to file", default = "")
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-eg", "--edge", help = "show edges", action = 'store_true', default = False)
 ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
@@ -238,9 +237,8 @@ for face in faces :
         # Find first point of hist[] not zero
         if (power_end == 0 and hist[i] != 0) :
             power_end = i
-        else :
-            # Find hist[] rising point
-            if (power_end != 0 and hist[i] != 0 and (hist[i - 1] / hist[i]) > HIST_RISE) :
+        # Find hist[] rising point        
+        elif (power_end != 0 and hist[i] != 0 and (hist[i - 1] / hist[i]) > HIST_RISE) :
                 power_start = i
     # Limit power_start 
     if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
@@ -260,14 +258,13 @@ for face in faces :
     for i in range(power_start, power_end + 1) :
         power += hist[i] * i
     # Power deducted by dispartion of histgrom
-    if (power_end == MAX_HIST) :
+    if (power_end == MAX_BINS) :
         power *= 1.2
     else : 
-        if (power_end == MAX_HIST - 1) :
+        if (power_end == MAX_BINS - 1) :
             power *= 1.1
-        else : 
-            if (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
-                power *= 0.8
+        elif (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
+            power *= 0.8
     # Power deducted by face detecting result
     if (faces_count != 0) : 
         if (face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
@@ -298,8 +295,7 @@ else :
     max_width = int(max_face[FACE.WIDTH])
     max_height = int(max_face[FACE.HEIGHT])
     max_score = max_face[FACE.SCORE]
-    k = ((max_score + K_ADJSUT) ** 2) if (max_score < POWER_POLE) else max_score
-    max_power *= k
+    max_power *= ((max_score + POWER_SLOPE) ** 2) if (max_score < POWER_POLE) else max_score
     if (verbose >= 3) : 
         print("max width={0}, height={1}".format(max_width, max_height))
     pixel_count = max_width * max_height / PIXEL10K

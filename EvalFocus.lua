@@ -49,13 +49,6 @@ LrTasks.startAsyncTask( function ()
 	local TargetPhoto = CurrentCatalog:getTargetPhoto()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
 	local countPhotos = #SelectedPhotos
-	local c = math.log(countPhotos, 10)
-	local pgtick = 10
-	if ( c > 3.0 ) then
-		pgtick = 50
-	elseif (c > 2.6) then
-		pgtick = 25
-	end
 	--loops photos in selected
 	for i,PhotoIt in ipairs(SelectedPhotos) do
 		if (PhotoIt:getRawMetadata('fileFormat') == 'JPG' and PhotoIt:getRawMetadata('fileSize') ~= nil ) then 
@@ -76,9 +69,7 @@ LrTasks.startAsyncTask( function ()
 		else
 --			Logger:info('skip non JPEG file.')
 		end --isVideo
-		if ((i % pgtick) == 0) then 
-			ProgressBar:setPortionComplete(i, countPhotos)
-		end
+		ProgressBar:setPortionComplete(i, countPhotos)
 	end --end of for photos loop
 	ProgressBar:done()
 	LrSelection.selectNone()

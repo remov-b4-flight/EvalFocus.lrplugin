@@ -21,7 +21,6 @@ local prefs = import 'LrPrefs'.prefsForPlugin()
 
 --Constants
 local SEP = ' '
-local OUTOP = '-o'
 local SCRIPT = '/evalfocus.py'
 local SCRIPT_PATH = _PLUGIN.path .. SCRIPT
 local MINRESULT = 5
@@ -61,26 +60,18 @@ LrTasks.startAsyncTask( function ()
 	for i,PhotoIt in ipairs(SelectedPhotos) do
 		if (PhotoIt:getRawMetadata('fileFormat') == 'JPG' and PhotoIt:getRawMetadata('fileSize') ~= nil ) then 
 			local FilePath = PhotoIt:getRawMetadata('path')
-			local TempPath = os.tmpname()
-			local CommandLine = python .. SEP .. SCRIPT_PATH .. SEP .. FilePath .. SEP .. OUTOP .. SEP .. TempPath
+			local CommandLine = python .. SEP .. SCRIPT_PATH .. SEP .. FilePath
 --			Logger:info(CommandLine)
 			-- only MSB 8 bits are valid
-			local retval = LrTasks.execute(CommandLine) / 256
-			-- get results to file
-			local contents = LrFileUtils.readFile(TempPath)
-			local value = 0
-			if (string.len(contents) > 0) then
-				value = tonumber(contents)
-			end
-			LrFileUtils.delete(TempPath)
+			local return_value = LrTasks.execute(CommandLine) / 256
 --			Logger:info('value=' .. value)
-			if (retval >= MINRESULT) then 
+			if (return_value >= MINRESULT) then 
 				CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
-					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', value)
-					if (prefs.AutoReject == true and value < prefs.RejectRange) then
+					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', return_value)
+					if (prefs.AutoReject == true and (return_value < prefs.RejectRange or PhotoIt:getRawMetadata('shutterSpeed') > 1)) then
 						PhotoIt:setRawMetadata('pickStatus', -1)
 					end
-				end, { timeout = 0.1 } ) --end of withWriteAccessDo 					
+				end, { timeout = 0.33 } ) --end of withWriteAccessDo 					
 			end
 		else
 --			Logger:info('skip non JPEG file.')

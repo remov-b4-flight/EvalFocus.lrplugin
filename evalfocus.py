@@ -17,6 +17,7 @@ MIN_RESULT = 5
 MAX_RESULT = 255
 SMALL_LS = 2400
 BIG_LS = 4800
+# User interface
 VISUAL_WAIT = 3000
 # Constants for face recognition 
 SCORE_THRESHOLD = 0.75
@@ -29,11 +30,13 @@ HIST_RISE = 2
 POWER_RANGE = 6
 MOUTH_DEDUCT = 0.8
 EYE_DEDUCT = 0.88
+POWER_POLE = 0.9
+K_ADJSUT = 0.05
 # Mask area for foulier transform 
 FOULIER_MASK = 8
 # Tolerance for canny filter
 SIGMA = 0.33
-# Error code
+# Error code for OS
 ERROR_CANTOPEN = 2
 
 # FaceDetectorYN result index
@@ -66,7 +69,7 @@ def get_resize_factor(long_side) :
     if (BIG_LS < long_side) :
         return (1/4)
     elif (SMALL_LS < long_side <= BIG_LS) :
-        return (1/2)
+        return (1/4)
     else :
         return 1
 
@@ -108,7 +111,7 @@ ap.add_argument("-d", help = "filter depth", type = int, choices = [8, 32], defa
 ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = False)
 ap.add_argument("-la", "--laplacian", help = "force laplacian", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
-ap.add_argument("-o", help = "output raw result to file", default = "")
+#ap.add_argument("-o", help = "output raw result to file", default = "")
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-eg", "--edge", help = "show edges", action = 'store_true', default = False)
 ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
@@ -143,6 +146,9 @@ if original_image is None :
     print(image_path, " CAN'T READ.")
     sys.exit(ERROR_CANTOPEN)
 
+if (verbose >= 2) : 
+    print("original size=",original_image.shape)
+
 # Image resizing fot face detect.
 orig_height, orig_width, _ = original_image.shape
 long_side = max(orig_height, orig_width)
@@ -153,7 +159,7 @@ image = cv.resize(original_image, None, fx=factor, fy=factor,
                   interpolation=cv.INTER_NEAREST_EXACT)
 
 if (verbose >= 2) : 
-    print("shape=", image.shape)
+    print("resized image=", image.shape)
 
 # Detecting faces.
 height, width, _ = image.shape
@@ -185,15 +191,15 @@ for face in faces :
 
     if (verbose >= 1) : 
         print("area", count, end=": ")
-    if (verbose >= 5) :
-        print(face)
+    if (verbose >= 2) :
+        print("width={0}, height={1}".format(int(face[FACE.WIDTH]), int(face[FACE.HEIGHT])), end=", ")
     face_rmouth_x = int(face[FACE.RMOUTH_X])
     face_lmouth_x = int(face[FACE.LMOUTH_X])
-    if (faces_count >= 1 and verbose >= 2) :
+    if (faces_count >= 1 and verbose >= 3) :
         print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
     face_leye_x = int(face[FACE.LEYE_X])
     face_reye_x = int(face[FACE.REYE_X])
-    if (faces_count >= 1 and verbose >= 2) :
+    if (faces_count >= 1 and verbose >= 3) :
         print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
     face_score = round(face[FACE.SCORE], 2) if faces_count >= 1 else 0.0
     # Crop face
@@ -201,21 +207,20 @@ for face in faces :
     face_x2 = face_x1 + int(face[FACE.WIDTH])
     face_y1 = 0 if (face[FACE.Y] < 0) else int(face[FACE.Y])
     face_y2 = face_y1 + int(face[FACE.HEIGHT])
-    face_image = image[face_y1 : face_y2,
-                        face_x1 : face_x2]
+    face_image = image[face_y1 : face_y2, face_x1 : face_x2]
     if (verbose >= 5) :
         print ("face x1={0},x2={1},y1={2},y2={3}".format(face_x1,face_x2,face_y1,face_y2))
 
     # Grayscale conversion
-    gray = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
+    gray_image = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
 
     # Make edge image
     if (force_sobel == True) : 
         # Sobel filter
-        edge_image = get_sobel_edges(gray, filter_ddepth, filter_kernel)
+        edge_image = get_sobel_edges(gray_image, filter_ddepth, filter_kernel)
     else :
         # Laplacian conversion
-        edge_image = cv.Laplacian(gray, filter_ddepth, filter_kernel)
+        edge_image = cv.Laplacian(gray_image, filter_ddepth, filter_kernel)
 
     if (args["edge"]) :
            cv.imshow("Edges", edge_image)
@@ -293,7 +298,8 @@ else :
     max_width = int(max_face[FACE.WIDTH])
     max_height = int(max_face[FACE.HEIGHT])
     max_score = max_face[FACE.SCORE]
-    max_power *= (max_score ** 2)
+    k = ((max_score + K_ADJSUT) ** 2) if (max_score < POWER_POLE) else max_score
+    max_power *= k
     if (verbose >= 3) : 
         print("max width={0}, height={1}".format(max_width, max_height))
     pixel_count = max_width * max_height / PIXEL10K
@@ -344,15 +350,7 @@ if (args['graph'] == True) :
     plt.show()
 
 # Output result to stdout
-if (verbose >= 1) : 
-    print("result=", result)
-else : 
-    print(result)
-
-# raw result output to file
-if (len(args["o"]) != 0) :
-    with open(args["o"], mode='w') as f :
-        f.write(str(result))
+print("result=", result)
 
 # Return value to OS
 if (result > MAX_RESULT) :

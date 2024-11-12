@@ -13,10 +13,12 @@ import numpy as np
 
 # Constants
 PIXEL10K = 10000
+# Constants for result range
 MIN_RESULT = 5
 MAX_RESULT = 255
-SMALL_LS = 2400
-BIG_LS = 4800
+# Constants for Resize 
+SMALL_LONGSIDE = 2400
+BIG_LONGSIDE = 4800
 # User interface
 VISUAL_WAIT = 3000
 # Constants for face recognition 
@@ -50,13 +52,13 @@ class FACE :
     LMOUTH_X = 12 ; LMOUTH_Y = 13
     SCORE = 14
 
-# Color constants for vlog
+# Color constants for visual log
 class COLOR :
     RED = (0, 0, 255) ; BLUE = (255, 0, 0) ; GREEN = (0, 255, 0)
     MAGENTA = (255, 0, 255) ; CYAN = (255, 255, 0) ; YELLOW = (0, 255, 255)
     WHITE = (255, 255, 255)
 
-# Write vlog image to home
+# Write visual log image to home folder.
 def write_image(file_path, image, sub_dir="vlog") :
     homedir = os.environ['HOME']
     (_, file_name) = os.path.split(file_path)
@@ -65,20 +67,24 @@ def write_image(file_path, image, sub_dir="vlog") :
     export_file_path = os.path.join(report_dir, file_name)
     cv.imwrite(export_file_path, image)
 
+# Get resize factor from long side of image.
 def get_resize_factor(long_side) :
-    if (BIG_LS < long_side) :
+#    if (BIG_LONGSIDE < long_side) :
+#        return (1/4)
+#    elif (SMALL_LONGSIDE < long_side <= BIG_LONGSIDE) :
+    if (SMALL_LONGSIDE < long_side) :
         return (1/4)
-    elif (SMALL_LS < long_side <= BIG_LS) :
-        return (1/2)
     else :
         return 1
 
+# Detecting images edges using Sobel filter.
 def get_sobel_edges(image, ddepth, kernel) :
     sobel_x = cv.convertScaleAbs(cv.Sobel(image, ddepth, 1, 0, kernel))
     sobel_y = cv.convertScaleAbs(cv.Sobel(image, ddepth, 0, 1, kernel))
     edges = cv.addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0)
     return edges
 
+# Detecting image edges using Canny filter.
 def get_canny_edges(image, sigma) :
     median_value = np.median(image)
     min_value = int( max(0, (1.0-sigma) * median_value) )
@@ -86,6 +92,7 @@ def get_canny_edges(image, sigma) :
     edges = cv.Canny(image, min_value, max_value)
     return edges
 
+# Metering image power using foulier transform.
 def get_foulier_power(image) :
     f = np.fft.fft2(image)
     fshift = np.fft.fftshift(f)
@@ -102,7 +109,7 @@ def get_foulier_power(image) :
 
 # Main
 
-# Option parse
+# Parseing Options.
 ap = argparse.ArgumentParser(description = "Evaluate image focus.")
 ap.add_argument("file", help = "Image file to process.",)
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
@@ -113,10 +120,11 @@ ap.add_argument("-la", "--laplacian", help = "force laplacian", action = 'store_
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-eg", "--edge", help = "show edges", action = 'store_true', default = False)
-ap.add_argument("-vl", "--vlog", help = "save image log", action = 'store_true', default = False)
+ap.add_argument("-vl", "--vlog", help = "save visual log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
-# Additional parameter parse
+
+# Parseing additional parameters.
 verbose = args["v"]
 filter_kernel = args["k"]
 filter_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U 
@@ -133,13 +141,13 @@ if (verbose >= 5) :
 
 image_path = args["file"]
 
-# Model files exist check
+# Exists check for Model file.
 if (os.path.isfile(fd_model) != True) :
     sys.exit(ERROR_CANTOPEN)
 
 if (verbose >= 1) : 
     print("input image=", image_path)
-# Read image
+# Read image.
 original_image = cv.imread(image_path)
 if original_image is None :
     print(image_path, " CAN'T READ.")
@@ -154,8 +162,9 @@ long_side = max(orig_height, orig_width)
 factor = get_resize_factor(long_side)
 if (verbose >= 2) : 
     print("resize factor=", factor)
+
 image = cv.resize(original_image, None, fx=factor, fy=factor, 
-                  interpolation=cv.INTER_NEAREST_EXACT)
+                    interpolation=cv.INTER_NEAREST_EXACT)
 
 if (verbose >= 2) : 
     print("resized image=", image.shape)
@@ -185,7 +194,7 @@ max_power = -1
 max_index = -1
 max_foulier = -1
 
-# Loop with detected faces
+# Loop with detected faces.
 for face in faces :
 
     if (verbose >= 1) : 
@@ -210,7 +219,7 @@ for face in faces :
     if (verbose >= 5) :
         print ("face x1={0},x2={1},y1={2},y2={3}".format(face_x1,face_x2,face_y1,face_y2))
 
-    # Grayscale conversion
+    # Grayscale conversion.
     gray_image = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
 
     # Make edge image
@@ -221,18 +230,19 @@ for face in faces :
         # Laplacian conversion
         edge_image = cv.Laplacian(gray_image, filter_ddepth, filter_kernel)
 
+    # Show edge image by option.
     if (args["edge"]) :
            cv.imshow("Edges", edge_image)
            cv.waitKey(VISUAL_WAIT)
 
-    # Get histogram from edge image
+    # Get histogram from edge image.
     hist, bins = np.histogram(edge_image, bins = HIST_BINS, range = (0,255))
     power_length = len(hist)
 
-    # Determine power calc. start/end
+    # Determine start/end for power calculation.
     power_start = 0
     power_end = 0
-    # Seeking power_start and power end
+    # Seeking power_start and power_end.
     for i in range((power_length - 1), 0, -1) :
         # Find first point of hist[] not zero
         if (power_end == 0 and hist[i] != 0) :
@@ -240,7 +250,7 @@ for face in faces :
         # Find hist[] rising point        
         elif (power_end != 0 and hist[i] != 0 and (hist[i - 1] / hist[i]) > HIST_RISE) :
                 power_start = i
-    # Limit power_start 
+    # Limit power_start by POWER_RANGE.
     if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
         power_start = power_end - POWER_RANGE + 1
 
@@ -253,7 +263,7 @@ for face in faces :
         else : 
             print("hist=", hist[ power_start : power_end + 1], end=", ")
 
-    # Calculate the power
+    # Calculate power of current face.
     power = 0
     for i in range(power_start, power_end + 1) :
         power += hist[i] * i
@@ -285,33 +295,40 @@ for face in faces :
         print()
 
     count += 1
-# End loop of faces
+# End loop of faces.
 
-# Evaluate face has max_power
+# Evaluate face has max_power.
 if (max_power < 0) :
+    #It seems no face throuth POWER_GATE in image.
     result = 0
 else :
     max_face = faces[max_index]
     max_width = int(max_face[FACE.WIDTH])
     max_height = int(max_face[FACE.HEIGHT])
     max_score = max_face[FACE.SCORE]
+
+    # Make slope for face has low score.
     max_power *= ((max_score + POWER_SLOPE) ** 2) if (max_score < POWER_POLE) else max_score
+
     if (verbose >= 3) : 
         print("max width={0}, height={1}".format(max_width, max_height))
     pixel_count = max_width * max_height / PIXEL10K
 
-    # round up for too small face
+    # Rounds up for too small face.
     if (pixel_count < 1) :
         pixel_count = 1
-
+    # Make result.
     power_kpixel = max_power / pixel_count
+    result = int(round(power_kpixel, 1))
     if (verbose >= 2) :
         print("10Kpixels=", pixel_count)
         print("max power=", max_power)
         print("power/10Kpixels=", power_kpixel)
-    result = int(round(power_kpixel, 1))
 
-# Make image log
+# Output result to stdout.
+print("result=", result)
+
+# Make visual log by option.
 if (args["vlog"]) :
     # Draw result for face has max power
     if(faces_count >= 1) :
@@ -344,9 +361,6 @@ if (args['graph'] == True) :
     plt.stairs(hist, bins, fill = True)
     plt.title(hist_title)
     plt.show()
-
-# Output result to stdout
-print("result=", result)
 
 # Return value to OS
 if (result > MAX_RESULT) :

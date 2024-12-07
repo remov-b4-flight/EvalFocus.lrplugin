@@ -116,7 +116,6 @@ ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
 ap.add_argument("-k", help = "filter kernel", type = int, choices = [1, 3, 5, 7, 9], default = 5)
 ap.add_argument("-d", help = "filter depth", type = int, choices = [8, 32], default = 8)
 ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = False)
-ap.add_argument("-la", "--laplacian", help = "force laplacian", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-eg", "--edge", help = "show edges", action = 'store_true', default = False)
@@ -129,9 +128,6 @@ verbose = args["v"]
 filter_kernel = args["k"]
 filter_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U 
 force_sobel = args["sobel"]
-force_lap = args["laplacian"]
-if (force_sobel == True) :
-    force_lap = False
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
@@ -147,6 +143,10 @@ if (os.path.isfile(fd_model) != True) :
 
 if (verbose >= 1) : 
     print("input image=", image_path)
+# Input image exist check.
+if (os.path.isfile(image_path) != True) :
+    print(image_path, " NOT EXISTS.")
+    sys.exit(ERROR_CANTOPEN)
 # Read image.
 original_image = cv.imread(image_path)
 if original_image is None :
@@ -312,6 +312,7 @@ else :
 
     if (verbose >= 3) : 
         print("max width={0}, height={1}".format(max_width, max_height))
+
     pixel_count = max_width * max_height / PIXEL10K
 
     # Rounds up for too small face.
@@ -326,7 +327,8 @@ else :
         print("power/10Kpixels=", power_kpixel)
 
 # Output result to stdout.
-print("result=", result)
+if (verbose >= 1) : 
+    print("result=", result)
 
 # Make visual log by option.
 if (args["vlog"]) :

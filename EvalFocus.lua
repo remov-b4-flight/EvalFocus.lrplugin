@@ -5,7 +5,7 @@ EvalFocus.lrdevplugin
 ]]
 
 -- Please specfy python in your local enviromnent.
-local python = '/opt/homebrew/bin/python3.12'
+local python = '/opt/homebrew/bin/python3'
 
 local PluginTitle = 'EvalFocus'
 local LrApplication = import 'LrApplication'
@@ -57,7 +57,7 @@ LrTasks.startAsyncTask( function ()
 --			Logger:info(CommandLine)
 			-- only MSB 8 bits are valid
 			local return_value = LrTasks.execute(CommandLine) / 256
---			Logger:info('value=' .. value)
+--			Logger:info('value=' .. return_value)
 			if (return_value >= MINRESULT) then 
 				CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', return_value)

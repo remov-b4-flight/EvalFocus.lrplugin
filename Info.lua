@@ -1,14 +1,14 @@
 --[[-------------------------------------------------------
-EvalFocus.lrdevplugin
 @file	Info.lua
 @author	@remov_b4_flight
+@brief	all the metadata for the plugin
 ---------------------------------------------------------]]
 
 return {
 
 	LrSdkVersion = 4.0,
 
-	LrToolkitIdentifier = 'nu.mine.ruffles.evalfocus',
+	LrToolkitIdentifier = 'cx.ath.remov-b4-flight.evalfocus',
 	LrPluginName = 'EvalFocus',
 	LrPluginInfoUrl='https://twitter.com/remov_b4_flight',
 	LrMetadataProvider = 'MetadataDefinition.lua',
@@ -22,6 +22,6 @@ return {
 		file = 'EvalClear.lua',
 		enabledWhen = 'photosAvailable',},
 	},
-	VERSION = { major = 0, minor = 9, revision = 11, build = 0, },
+	VERSION = { major = 0, minor = 9, revision = 12, build = 0, },
 
 }

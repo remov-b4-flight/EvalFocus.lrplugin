@@ -9,7 +9,6 @@ import os
 import sys
 import numpy as np
 #import threading as th
-#import matplotlib as plt
 
 # Constants
 PIXEL10K = 10000
@@ -178,7 +177,7 @@ faces_count = len(faces) if faces is not None else 0
 if (verbose >= 1) : 
     print("faces=", faces_count)
 
-# If any face not found, process entire image.
+# If any face not found, process entire of image.
 faces = faces if faces is not None else [[
     0, 0, width, height, 
     0, 0,   # right eye (x,y)
@@ -194,21 +193,24 @@ max_power = -1
 max_index = -1
 max_foulier = -1
 
-# Loop with detected faces.
+# Iterate loop with detected faces.
 for face in faces :
 
     if (verbose >= 1) : 
         print("area", count, end=": ")
     if (verbose >= 2) :
         print("width={0}, height={1}".format(int(face[FACE.WIDTH]), int(face[FACE.HEIGHT])), end=", ")
+    # Get mouth detecting result
     face_rmouth_x = int(face[FACE.RMOUTH_X])
     face_lmouth_x = int(face[FACE.LMOUTH_X])
     if (faces_count >= 1 and verbose >= 3) :
         print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
+    # Get eye detecting result
     face_leye_x = int(face[FACE.LEYE_X])
     face_reye_x = int(face[FACE.REYE_X])
     if (faces_count >= 1 and verbose >= 3) :
         print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
+        
     face_score = round(face[FACE.SCORE], 2) if faces_count >= 1 else 0.0
     # Crop face
     face_x1 = 0 if (face[FACE.X] < 0) else int(face[FACE.X]) 

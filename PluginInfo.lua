@@ -23,7 +23,7 @@ end
 function PluginInfo.sectionsForTopOfDialog( viewFactory, propertyTable )
 	return {
 		{
-			title = 'EvalFocus',
+			title = prefs.Title,
 			synopsis = 'Evaluate image focus',
 			bind_to_object = propertyTable,
 			viewFactory:row {

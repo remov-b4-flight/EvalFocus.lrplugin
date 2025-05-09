@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/python3.12
+#!/opt/homebrew/bin/python3
 ## 
 # @brief Evaluate focus by OpenCV functions.
 # @author remov_b4_flight
@@ -194,29 +194,29 @@ max_index = -1
 max_foulier = -1
 
 # Iterate loop with detected faces.
-for face in faces :
+for img_it in faces :
 
     if (verbose >= 1) : 
         print("area", count, end=": ")
     if (verbose >= 2) :
-        print("width={0}, height={1}".format(int(face[FACE.WIDTH]), int(face[FACE.HEIGHT])), end=", ")
+        print("width={0}, height={1}".format(int(img_it[FACE.WIDTH]), int(img_it[FACE.HEIGHT])), end=", ")
     # Get mouth detecting result
-    face_rmouth_x = int(face[FACE.RMOUTH_X])
-    face_lmouth_x = int(face[FACE.LMOUTH_X])
+    face_rmouth_x = int(img_it[FACE.RMOUTH_X])
+    face_lmouth_x = int(img_it[FACE.LMOUTH_X])
     if (faces_count >= 1 and verbose >= 3) :
         print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
     # Get eye detecting result
-    face_leye_x = int(face[FACE.LEYE_X])
-    face_reye_x = int(face[FACE.REYE_X])
+    face_leye_x = int(img_it[FACE.LEYE_X])
+    face_reye_x = int(img_it[FACE.REYE_X])
     if (faces_count >= 1 and verbose >= 3) :
         print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
         
-    face_score = round(face[FACE.SCORE], 2) if faces_count >= 1 else 0.0
+    face_score = round(img_it[FACE.SCORE], 2) if faces_count >= 1 else 0.0
     # Crop face
-    face_x1 = 0 if (face[FACE.X] < 0) else int(face[FACE.X]) 
-    face_x2 = face_x1 + int(face[FACE.WIDTH])
-    face_y1 = 0 if (face[FACE.Y] < 0) else int(face[FACE.Y])
-    face_y2 = face_y1 + int(face[FACE.HEIGHT])
+    face_x1 = 0 if (img_it[FACE.X] < 0) else int(img_it[FACE.X]) 
+    face_x2 = face_x1 + int(img_it[FACE.WIDTH])
+    face_y1 = 0 if (img_it[FACE.Y] < 0) else int(img_it[FACE.Y])
+    face_y2 = face_y1 + int(img_it[FACE.HEIGHT])
     face_image = image[face_y1 : face_y2, face_x1 : face_x2]
     if (verbose >= 5) :
         print ("face x1={0},x2={1},y1={2},y2={3}".format(face_x1,face_x2,face_y1,face_y2))

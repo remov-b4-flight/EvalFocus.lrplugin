@@ -4,7 +4,7 @@ EvalImage.lrdevplugin
 @author @remov_b4_flight
 ---------------------------------------------------------]]
 
-local PluginTitle = 'EvalFocus'
+local prefs = import 'LrPrefs'.prefsForPlugin()
 local LrApplication = import 'LrApplication'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
@@ -14,7 +14,7 @@ local CurrentCatalog = LrApplication.activeCatalog()
 --Main part of this plugin.
 LrTasks.startAsyncTask( function ()
 	local ProgressBar = LrProgress(
-		{title = PluginTitle .. ' is Clearing..'}
+		{title = prefs.Title .. ' is Clearing..'}
 	)
 	local TargetPhoto = CurrentCatalog:getTargetPhoto()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()

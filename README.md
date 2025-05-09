@@ -16,5 +16,8 @@ Mainly developed for macOS environment. I have no Windows environment.
 Select Photos and Select Lightroom menu Library->Plugin Extra->Evalfocus->evaluate
 results are appeared as custom metadata 'Value' as string-nized number.
 And Added reject flag that 'Value' below from plugin setting 'Autoreject' value
+## Disclaimer
+The developers shall not be held liable for any damages arising from the use of this software. Use it at your own risk.
+If you use this of software, The final decision of deletion is yours.
 ## Licence
 GPLv3

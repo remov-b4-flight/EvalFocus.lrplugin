@@ -7,7 +7,6 @@ EvalFocus.lrdevplugin
 -- Please specfy python in your local enviromnent.
 local python = '/opt/homebrew/bin/python3'
 
-local PluginTitle = 'EvalFocus'
 local LrApplication = import 'LrApplication'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
@@ -16,7 +15,7 @@ local LrFileUtils = import 'LrFileUtils'
 local prefs = import 'LrPrefs'.prefsForPlugin()
 
 --local LrLogger = import 'LrLogger'
---local Logger = LrLogger(PluginTitle)
+--local Logger = LrLogger(prefs.Title)
 --Logger:enable('logfile')
 
 --Constants
@@ -44,7 +43,7 @@ local CurrentCatalog = LrApplication.activeCatalog()
 --Main part of this plugin.
 LrTasks.startAsyncTask( function ()
 	local ProgressBar = LrProgress(
-		{title = PluginTitle .. ' is Running..'}
+		{title = prefs.Title .. ' is running..'}
 	)
 	local TargetPhoto = CurrentCatalog:getTargetPhoto()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
@@ -63,6 +62,7 @@ LrTasks.startAsyncTask( function ()
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', return_value)
 					if (prefs.AutoReject == true and (return_value < prefs.RejectRange or PhotoIt:getRawMetadata('shutterSpeed') > 1)) then
 						PhotoIt:setRawMetadata('pickStatus', -1)
+						PhotoIt:setRawMetadata('colorNameForLabel','blue')
 					end
 				end, { timeout = 0.33 } ) --end of withWriteAccessDo 					
 			end

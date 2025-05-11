@@ -60,7 +60,8 @@ LrTasks.startAsyncTask( function ()
 			if (return_value >= MINRESULT) then 
 				CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', return_value)
-					if (prefs.AutoReject == true and (return_value < prefs.RejectRange or PhotoIt:getRawMetadata('shutterSpeed') > 1)) then
+					local speed = PhotoIt:getRawMetadata('shutterSpeed') and 0
+					if (prefs.AutoReject == true and (return_value < prefs.RejectRange or speed > 1)) then
 						PhotoIt:setRawMetadata('pickStatus', -1)
 						PhotoIt:setRawMetadata('colorNameForLabel','blue')
 					end

@@ -213,16 +213,16 @@ for img_it in faces :
         
     face_score = round(img_it[FACE.SCORE], 2) if faces_count >= 1 else 0.0
     # Crop face
-    face_x1 = 0 if (img_it[FACE.X] < 0) else int(img_it[FACE.X]) 
-    face_x2 = face_x1 + int(img_it[FACE.WIDTH])
-    face_y1 = 0 if (img_it[FACE.Y] < 0) else int(img_it[FACE.Y])
-    face_y2 = face_y1 + int(img_it[FACE.HEIGHT])
-    face_image = image[face_y1 : face_y2, face_x1 : face_x2]
+    img_x1 = 0 if (img_it[FACE.X] < 0) else int(img_it[FACE.X]) 
+    img_x2 = img_x1 + int(img_it[FACE.WIDTH])
+    img_y1 = 0 if (img_it[FACE.Y] < 0) else int(img_it[FACE.Y])
+    img_y2 = img_y1 + int(img_it[FACE.HEIGHT])
+    crop_image = image[img_y1 : img_y2, img_x1 : img_x2]
     if (verbose >= 5) :
-        print ("face x1={0},x2={1},y1={2},y2={3}".format(face_x1,face_x2,face_y1,face_y2))
+        print ("image x1={0},x2={1},y1={2},y2={3}".format(img_x1,img_x2,img_y1,img_y2))
 
     # Grayscale conversion.
-    gray_image = cv.cvtColor(face_image, cv.COLOR_BGR2GRAY)
+    gray_image = cv.cvtColor(crop_image, cv.COLOR_BGR2GRAY)
 
     # Make edge image
     if (force_sobel == True) : 

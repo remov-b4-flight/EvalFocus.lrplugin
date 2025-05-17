@@ -210,7 +210,7 @@ for img_it in faces :
     face_reye_x = int(img_it[FACE.REYE_X])
     if (faces_count >= 1 and verbose >= 3) :
         print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
-        
+    # Get face detecting result
     face_score = round(img_it[FACE.SCORE], 2) if faces_count >= 1 else 0.0
     # Crop face
     img_x1 = 0 if (img_it[FACE.X] < 0) else int(img_it[FACE.X]) 
@@ -271,12 +271,12 @@ for img_it in faces :
         power += hist[i] * i
     # Power deducted by dispartion of histgrom
     if (power_end == MAX_BINS) :
-        power *= 1.2
+        power *= 1.25
     else : 
         if (power_end == MAX_BINS - 1) :
             power *= 1.1
         elif (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
-            power *= 0.8
+            power *= 0.75
     # Power deducted by face detecting result
     if (faces_count != 0) : 
         if (face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
@@ -297,7 +297,7 @@ for img_it in faces :
         print()
 
     count += 1
-# End loop of faces.
+# End iteration of faces.
 
 # Evaluate face has max_power.
 if (max_power < 0) :
@@ -309,13 +309,17 @@ else :
     max_height = int(max_face[FACE.HEIGHT])
     max_score = max_face[FACE.SCORE]
 
-    # Make slope for face has low score.
+    # Make slope for image(face) has low score.
     max_power *= ((max_score + POWER_SLOPE) ** 2) if (max_score < POWER_POLE) else max_score
 
     if (verbose >= 3) : 
         print("max width={0}, height={1}".format(max_width, max_height))
+    # if face count is 0, use half of image size as ROI.
+    if (faces_count == 0) :
+        max_width /= 2
+        max_height /= 2
 
-    pixel_count = max_width * max_height / PIXEL10K
+    pixel_count = int(max_width * max_height / PIXEL10K)
 
     # Rounds up for too small face.
     if (pixel_count < 1) :

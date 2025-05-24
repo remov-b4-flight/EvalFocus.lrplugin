@@ -276,7 +276,7 @@ for img_it in faces :
     if (power_end == MAX_BINS) :
         power *= 1.25
     else : 
-        if (power_end == MAX_BINS - 1) :
+        if (power_end == (MAX_BINS - 1)) :
             power *= 1.1
         if (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
             power *= 0.75

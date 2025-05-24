@@ -28,7 +28,7 @@ local NOTFOUND = 2
 --For python logfile
 local REDIR = '>>'
 local LOG_OPTION = '-vvvv'
-local LOG_FILE = '/evalfocus.log'
+local LOG_FILE = '/' .. prefs.Title .. '.log'
 local LOGPATH = _PLUGIN.path .. LOG_FILE
 local LOG_CMDLINE = LOG_OPTION .. SEP .. REDIR .. SEP .. LOGPATH
 
@@ -51,6 +51,7 @@ LrTasks.startAsyncTask( function ()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
 	for i,PhotoIt in ipairs(SelectedPhotos) do
+		-- check if the user has canceled the operation
 		if (ProgressBar:isCanceled()) then
 			break
 		end

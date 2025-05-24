@@ -22,7 +22,7 @@ local prefs = import 'LrPrefs'.prefsForPlugin()
 local SEP = ' '
 local SCRIPT = '/evalfocus.py'
 local SCRIPT_PATH = _PLUGIN.path .. SCRIPT
-local OPTION = "-g"
+local OPTION = "-nm"
 local MINRESULT = 5
 local NOTFOUND = 2
 --For python logfile
@@ -52,8 +52,7 @@ LrTasks.startAsyncTask( function ()
 	--loops photos in selected
 	for i,PhotoIt in ipairs(SelectedPhotos) do
 		if (ProgressBar:isCanceled()) then
-			ProgressBar:done()
-			return
+			break
 		end
 		if (PhotoIt:getRawMetadata('fileFormat') == 'JPG' and PhotoIt:getRawMetadata('fileSize') ~= nil ) then 
 			local FilePath = PhotoIt:getRawMetadata('path')

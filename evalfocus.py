@@ -19,7 +19,7 @@ MAX_RESULT = 255
 SMALL_LONGSIDE = 2400
 BIG_LONGSIDE = 4800
 # User interface
-VISUAL_WAIT = 3000
+VISUAL_WAIT = 2500
 # Constants for face recognition 
 SCORE_THRESHOLD = 0.75
 # Constants for power estimation
@@ -329,7 +329,7 @@ else :
         pixel_count = 1
     # Make result.
     power_kpixel = max_power / pixel_count
-    result = int(round(power_kpixel, 1))
+    result = round(power_kpixel)
     if (verbose >= 2) :
         print("10Kpixels=", pixel_count)
         print("max power=", max_power)

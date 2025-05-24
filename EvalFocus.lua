@@ -22,6 +22,7 @@ local prefs = import 'LrPrefs'.prefsForPlugin()
 local SEP = ' '
 local SCRIPT = '/evalfocus.py'
 local SCRIPT_PATH = _PLUGIN.path .. SCRIPT
+local OPTION = "-g"
 local MINRESULT = 5
 local NOTFOUND = 2
 --For python logfile
@@ -50,9 +51,13 @@ LrTasks.startAsyncTask( function ()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
 	for i,PhotoIt in ipairs(SelectedPhotos) do
+		if (ProgressBar:isCanceled()) then
+			ProgressBar:done()
+			return
+		end
 		if (PhotoIt:getRawMetadata('fileFormat') == 'JPG' and PhotoIt:getRawMetadata('fileSize') ~= nil ) then 
 			local FilePath = PhotoIt:getRawMetadata('path')
-			local CommandLine = python .. SEP .. SCRIPT_PATH .. SEP .. FilePath
+			local CommandLine = python .. SEP .. SCRIPT_PATH .. SEP .. OPTION .. SEP .. FilePath
 --			Logger:info(CommandLine)
 			-- only MSB 8 bits are valid
 			local return_value = LrTasks.execute(CommandLine) / 256
@@ -60,8 +65,7 @@ LrTasks.startAsyncTask( function ()
 			if (return_value >= MINRESULT) then 
 				CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', return_value)
-					local speed = PhotoIt:getRawMetadata('shutterSpeed') and 0
-					if (prefs.AutoReject == true and (return_value < prefs.RejectRange or speed > 1)) then
+					if (prefs.AutoReject == true and return_value < prefs.RejectRange) then
 						PhotoIt:setRawMetadata('pickStatus', -1)
 						PhotoIt:setRawMetadata('colorNameForLabel','blue')
 					end

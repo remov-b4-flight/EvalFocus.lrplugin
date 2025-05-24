@@ -118,6 +118,7 @@ ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', d
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-eg", "--edge", help = "show edges", action = 'store_true', default = False)
+ap.add_argument("-nm", "--normalize", help = "normalize", action = 'store_true', default = False)
 ap.add_argument("-vl", "--vlog", help = "save visual log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
@@ -126,7 +127,6 @@ args = vars(ap.parse_args())
 verbose = args["v"]
 filter_kernel = args["k"]
 filter_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U 
-force_sobel = args["sobel"]
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
@@ -224,8 +224,11 @@ for img_it in faces :
     # Grayscale conversion.
     gray_image = cv.cvtColor(crop_image, cv.COLOR_BGR2GRAY)
 
+    if (args["normalize"]) :
+        gray_image = cv.normalize(gray_image, None, 0, 255, cv.NORM_MINMAX)
+
     # Make edge image
-    if (force_sobel == True) : 
+    if (args["sobel"]) : 
         # Sobel filter
         edge_image = get_sobel_edges(gray_image, filter_ddepth, filter_kernel)
     else :
@@ -275,7 +278,7 @@ for img_it in faces :
     else : 
         if (power_end == MAX_BINS - 1) :
             power *= 1.1
-        elif (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
+        if (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
             power *= 0.75
     # Power deducted by face detecting result
     if (faces_count != 0) : 

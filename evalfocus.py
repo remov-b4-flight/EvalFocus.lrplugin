@@ -224,7 +224,7 @@ for img_it in faces :
     # Grayscale conversion.
     gray_image = cv.cvtColor(crop_image, cv.COLOR_BGR2GRAY)
 
-    if (args["normalize"]) :
+    if (faces_count == 0 or args["normalize"]) :
         gray_image = cv.normalize(gray_image, None, 0, 255, cv.NORM_MINMAX)
 
     # Make edge image

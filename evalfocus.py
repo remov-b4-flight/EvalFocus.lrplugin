@@ -19,7 +19,7 @@ MAX_RESULT = 255
 SMALL_LONGSIDE = 2400
 BIG_LONGSIDE = 4800
 # User interface
-VISUAL_WAIT = 2500
+VISUAL_WAIT = 500  # 0.5 sec
 # Constants for face recognition 
 SCORE_THRESHOLD = 0.75
 # Constants for power estimation
@@ -165,6 +165,10 @@ if (verbose >= 2) :
 image = cv.resize(original_image, None, fx=factor, fy=factor, 
                     interpolation=cv.INTER_NEAREST_EXACT)
 
+# Normalize image if option is set.
+if (args["normalize"]) :
+    image = cv.normalize(image, None, 0, 255, cv.NORM_MINMAX)
+
 if (verbose >= 2) : 
     print("resized image=", image.shape)
 
@@ -223,9 +227,6 @@ for img_it in faces :
 
     # Grayscale conversion.
     gray_image = cv.cvtColor(crop_image, cv.COLOR_BGR2GRAY)
-
-    if (faces_count == 0 or args["normalize"]) :
-        gray_image = cv.normalize(gray_image, None, 0, 255, cv.NORM_MINMAX)
 
     # Make edge image
     if (args["sobel"]) : 

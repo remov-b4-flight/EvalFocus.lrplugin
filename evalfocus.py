@@ -12,6 +12,7 @@ import numpy as np
 
 # Constants
 PIXEL10K = 10000
+LIMIT_SMALL_FACE = (30 * 30)  # Limit for small face area
 # Constants for result range
 MIN_RESULT = 5
 MAX_RESULT = 255
@@ -19,7 +20,7 @@ MAX_RESULT = 255
 SMALL_LONGSIDE = 2400
 BIG_LONGSIDE = 4800
 # User interface
-VISUAL_WAIT = 500  # 0.5 sec
+VISUAL_WAIT = 1000  # 1 sec
 # Constants for face recognition 
 SCORE_THRESHOLD = 0.75
 # Constants for power estimation
@@ -29,8 +30,11 @@ POWER_END_GATE = ((HIST_BINS // 8) * 3)
 POWER_END_DESCEND = ((HIST_BINS // 8) * 6)
 HIST_RISE = 2
 POWER_RANGE = 6
+# Constants for power deduction
 MOUTH_DEDUCT = 0.8
-EYE_DEDUCT = 0.88
+EYE_DEDUCT = 0.75
+NOSE_DEDUCT = 0.85
+# Constants for power pole
 POWER_POLE = 0.9
 POWER_SLOPE = 0.05
 # Mask area for foulier transform 
@@ -204,6 +208,12 @@ for img_it in faces :
         print("area", count, end=": ")
     if (verbose >= 2) :
         print("width={0}, height={1}".format(int(img_it[FACE.WIDTH]), int(img_it[FACE.HEIGHT])), end=", ")
+    if ((img_it[FACE.WIDTH] * img_it[FACE.HEIGHT]) < LIMIT_SMALL_FACE) :
+        # Too small face, skip this.
+        if (verbose >= 1) : 
+            print("too small face, skipped.")
+        count += 1
+        continue
     # Get mouth detecting result
     face_rmouth_x = int(img_it[FACE.RMOUTH_X])
     face_lmouth_x = int(img_it[FACE.LMOUTH_X])
@@ -214,6 +224,11 @@ for img_it in faces :
     face_reye_x = int(img_it[FACE.REYE_X])
     if (faces_count >= 1 and verbose >= 3) :
         print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
+    # Get nose detecting result
+    face_nose_x = int(img_it[FACE.NOSE_X])
+    face_nose_y = int(img_it[FACE.NOSE_Y])
+    if (faces_count >= 1 and verbose >= 3) :
+        print("nose=({0},{1})".format(face_nose_x, face_nose_y), end=", ")
     # Get face detecting result
     face_score = round(img_it[FACE.SCORE], 2) if faces_count >= 1 else 0.0
     # Crop face
@@ -254,7 +269,7 @@ for img_it in faces :
         if (power_end == 0 and hist[i] != 0) :
             power_end = i
         # Find hist[] rising point        
-        elif (power_end != 0 and hist[i] != 0 and (hist[i - 1] / hist[i]) > HIST_RISE) :
+        elif (power_end != 0 and hist[i] != 0 and (hist[i + 1] / hist[i]) > HIST_RISE) :
                 power_start = i
     # Limit power_start by POWER_RANGE.
     if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
@@ -287,7 +302,8 @@ for img_it in faces :
             power *= MOUTH_DEDUCT
         if (face_reye_x <= 0 and face_leye_x <= 0) : 
             power *= EYE_DEDUCT
-
+        if (face_nose_x <= 0 and face_nose_y <= 0) :
+            power *= NOSE_DEDUCT
     if (verbose >= 1) : 
         print("power=", power, end=", ")
 
@@ -305,8 +321,9 @@ for img_it in faces :
 
 # Evaluate face has max_power.
 if (max_power < 0) :
-    #It seems no face throuth POWER_GATE in image.
+    #It seems no face throuth POWER_GATE in image or too small face.
     result = 0
+    faces_count = 0
 else :
     max_face = faces[max_index]
     max_width = int(max_face[FACE.WIDTH])
@@ -360,6 +377,9 @@ if (args["vlog"]) :
                     cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 3)
         cv.circle(image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
         cv.circle(image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
+        cv.circle(image, [int(max_face[FACE.REYE_X]), int(max_face[FACE.REYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
+        cv.circle(image, [int(max_face[FACE.LEYE_X]), int(max_face[FACE.LEYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
+        cv.circle(image, [int(max_face[FACE.NOSE_X]), int(max_face[FACE.NOSE_Y])], 5, COLOR.GREEN, -1, cv.LINE_AA)
     # Draw total result
     cv.putText(image, ("Result=" + str(result)), (32, 64), 
                 cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)

@@ -16,7 +16,7 @@ IGNORE_FACE_FACTOR = (0.075 / 100) # 0.075% of image size
 # Constants for result range
 MIN_RESULT = 5
 MAX_RESULT = 255
-# Constants for Resize 
+# Constants for resize 
 SMALL_LONGSIDE = 2000
 BIG_LONGSIDE = 4000
 # User interface
@@ -206,31 +206,37 @@ for img_it in faces :
 
     if (verbose >= 1) : 
         print("area", count, end=": ")
+
     face_width = int(img_it[FACE.WIDTH])
     face_height = int(img_it[FACE.HEIGHT])
-    face_pixels = face_width * face_height
     if (verbose >= 2) :
         print("width={0}, height={1}".format(face_width, face_height), end=", ")
+
     # If face size is too small, skip it.
+    face_pixels = face_width * face_height
     if ((face_pixels / resized_pixels) < IGNORE_FACE_FACTOR) :
         print("It's too small face, skipped.")
         count += 1
         continue
+
     # Get mouth detecting result
     face_rmouth_x = int(img_it[FACE.RMOUTH_X])
     face_lmouth_x = int(img_it[FACE.LMOUTH_X])
     if (faces_count >= 1 and verbose >= 3) :
         print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
+
     # Get eye detecting result
     face_leye_x = int(img_it[FACE.LEYE_X])
     face_reye_x = int(img_it[FACE.REYE_X])
     if (faces_count >= 1 and verbose >= 3) :
         print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
+
     # Get nose detecting result
     face_nose_x = int(img_it[FACE.NOSE_X])
     face_nose_y = int(img_it[FACE.NOSE_Y])
     if (faces_count >= 1 and verbose >= 3) :
         print("nose=({0},{1})".format(face_nose_x, face_nose_y), end=", ")
+
     # Get face detecting result
     face_score = round(img_it[FACE.SCORE], 2) if faces_count >= 1 else 0.0
     # Crop face
@@ -363,7 +369,7 @@ if (verbose >= 1) :
 if (args["vlog"]) :
     # Draw result for face has max power
     if(faces_count >= 1) :
-        vlog_line = max(width,height) // 1000
+        vlog_line = max(resized_width, resized_height) // 1000
         if (vlog_line < 3) : vlog_line = 3
 
         box = list(map(int, max_face[:4]))

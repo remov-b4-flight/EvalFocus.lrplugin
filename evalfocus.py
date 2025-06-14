@@ -12,13 +12,13 @@ import numpy as np
 
 # Constants
 PIXEL10K = 10000
-LIMIT_SMALL_FACE = (30 * 30)  # Limit for small face area
+IGNORE_FACE_FACTOR = (0.075 / 100) # 0.075% of image size
 # Constants for result range
 MIN_RESULT = 5
 MAX_RESULT = 255
 # Constants for Resize 
-SMALL_LONGSIDE = 2400
-BIG_LONGSIDE = 4800
+SMALL_LONGSIDE = 2000
+BIG_LONGSIDE = 4000
 # User interface
 VISUAL_WAIT = 1000  # 1 sec
 # Constants for face recognition 
@@ -72,11 +72,10 @@ def write_image(file_path, image, sub_dir="vlog") :
 
 # Get resize factor from long side of image.
 def get_resize_factor(long_side) :
-#    if (BIG_LONGSIDE < long_side) :
-#        return (1/4)
-#    elif (SMALL_LONGSIDE < long_side <= BIG_LONGSIDE) :
-    if (SMALL_LONGSIDE < long_side) :
+    if (BIG_LONGSIDE < long_side) :
         return (1/4)
+    elif (SMALL_LONGSIDE < long_side <= BIG_LONGSIDE) :
+        return (1/2)
     else :
         return 1
 
@@ -177,8 +176,9 @@ if (verbose >= 2) :
     print("resized image=", image.shape)
 
 # Detecting faces.
-height, width, _ = image.shape
-fd = cv.FaceDetectorYN_create(fd_model, "", (width, height), SCORE_THRESHOLD)
+resized_height, resized_width, _ = image.shape
+resized_pixels = resized_height * resized_width
+fd = cv.FaceDetectorYN_create(fd_model, "", (resized_width, resized_height), SCORE_THRESHOLD)
 _, faces = fd.detect(image)
 
 faces_count = len(faces) if faces is not None else 0
@@ -206,12 +206,14 @@ for img_it in faces :
 
     if (verbose >= 1) : 
         print("area", count, end=": ")
+    face_width = int(img_it[FACE.WIDTH])
+    face_height = int(img_it[FACE.HEIGHT])
+    face_pixels = face_width * face_height
     if (verbose >= 2) :
-        print("width={0}, height={1}".format(int(img_it[FACE.WIDTH]), int(img_it[FACE.HEIGHT])), end=", ")
-    if ((img_it[FACE.WIDTH] * img_it[FACE.HEIGHT]) < LIMIT_SMALL_FACE) :
-        # Too small face, skip this.
-        if (verbose >= 1) : 
-            print("too small face, skipped.")
+        print("width={0}, height={1}".format(face_width, face_height), end=", ")
+    # If face size is too small, skip it.
+    if ((face_pixels / resized_pixels) < IGNORE_FACE_FACTOR) :
+        print("It's too small face, skipped.")
         count += 1
         continue
     # Get mouth detecting result

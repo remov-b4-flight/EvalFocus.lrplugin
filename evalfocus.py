@@ -187,7 +187,7 @@ if (verbose >= 1) :
 
 # If any face not found, process entire of image.
 faces = faces if faces is not None else [[
-    0, 0, width, height, 
+    0, 0, resized_width, resized_height, 
     0, 0,   # right eye (x,y)
     0, 0,   # left eye (x,y)
     0, 0,   # nose (x,y)

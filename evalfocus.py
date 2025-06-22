@@ -304,7 +304,7 @@ for img_it in faces :
             power *= 1.1
         if (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
             power *= 0.75
-    # Power deducted by face detecting result
+    # Power deducted by face detection result
     if (faces_count != 0) : 
         if (face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
             power *= MOUTH_DEDUCT
@@ -329,7 +329,7 @@ for img_it in faces :
 
 # Evaluate face has max_power.
 if (max_power < 0) :
-    #It seems no face throuth POWER_GATE in image or too small face.
+    #It seems no face through POWER_GATE in image or too small face.
     result = 0
     faces_count = 0
 else :
@@ -365,7 +365,7 @@ else :
 if (verbose >= 1) : 
     print("result=", result)
 
-# Make visual log by option.
+# Make 'visual log' by option.
 if (args["vlog"]) :
     # Draw result for face has max power
     if(faces_count >= 1) :

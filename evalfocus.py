@@ -36,7 +36,7 @@ EYE_DEDUCT = 0.75
 NOSE_DEDUCT = 0.85
 # Constants for power pole
 POWER_POLE = 0.9
-POWER_SLOPE = 0.05
+POWER_SLOPE = 0.066
 # Mask area for foulier transform 
 FOULIER_MASK = 8
 # Tolerance for canny filter

@@ -12,7 +12,8 @@ import numpy as np
 
 # Constants
 PIXEL10K = 10000
-IGNORE_FACE_FACTOR = (0.075 / 100) # 0.075% of image size
+# Ignore smaller face than this factor by entire of image.
+IGNORE_FACE_FACTOR = (0.075 / 100) # 0.075%
 # Constants for result range
 MIN_RESULT = 5
 MAX_RESULT = 255
@@ -35,7 +36,7 @@ MOUTH_DEDUCT = 0.8
 EYE_DEDUCT = 0.75
 NOSE_DEDUCT = 0.85
 # Constants for power pole
-POWER_POLE = 0.9
+POWER_CLIFF = 0.9
 POWER_SLOPE = 0.066
 # Mask area for foulier transform 
 FOULIER_MASK = 8
@@ -339,7 +340,7 @@ else :
     max_score = max_face[FACE.SCORE]
 
     # Make slope for image(face) has low score.
-    max_power *= ((max_score + POWER_SLOPE) ** 2) if (max_score < POWER_POLE) else max_score
+    max_power *= ((max_score + POWER_SLOPE) ** 2) if (max_score < POWER_CLIFF) else max_score
 
     if (verbose >= 3) : 
         print("max width={0}, height={1}".format(max_width, max_height))

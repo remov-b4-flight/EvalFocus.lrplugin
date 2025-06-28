@@ -22,7 +22,7 @@ local prefs = import 'LrPrefs'.prefsForPlugin()
 local SEP = ' '
 local SCRIPT = '/evalfocus.py'
 local SCRIPT_PATH = _PLUGIN.path .. SCRIPT
-local OPTION = " -nm"
+local OPTION = " "
 local MINRESULT = 5
 local NOTFOUND = 2
 --For python logfile

@@ -122,7 +122,7 @@ ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', d
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
 ap.add_argument("-eg", "--edge", help = "show edges", action = 'store_true', default = False)
-ap.add_argument("-nm", "--normalize", help = "normalize", action = 'store_true', default = False)
+ap.add_argument("-nm", "--normalize", help = "normalize", action = 'store_true', default = True)
 ap.add_argument("-vl", "--vlog", help = "save visual log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())

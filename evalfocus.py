@@ -63,13 +63,11 @@ class COLOR :
     WHITE = (255, 255, 255)
 
 # Write visual log image to home folder.
-def write_image(file_path, image, sub_dir="vlog") :
+def make_report_dir(sub_dir="vlog") :
     homedir = os.environ['HOME']
-    (_, file_name) = os.path.split(file_path)
     report_dir = os.path.join(homedir, sub_dir)
     os.makedirs(report_dir, exist_ok = True)
-    export_file_path = os.path.join(report_dir, file_name)
-    cv.imwrite(export_file_path, image)
+    return report_dir
 
 # Get resize factor from long side of image.
 def get_resize_factor(long_side) :
@@ -120,8 +118,6 @@ ap.add_argument("-k", help = "filter kernel", type = int, choices = [1, 3, 5, 7,
 ap.add_argument("-d", help = "filter depth", type = int, choices = [8, 32], default = 8)
 ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
-ap.add_argument("-g", "--graph", help = "show histgram", action = 'store_true', default = False)
-ap.add_argument("-eg", "--edge", help = "show edges", action = 'store_true', default = False)
 ap.add_argument("-nm", "--normalize", help = "normalize", action = 'store_true', default = True)
 ap.add_argument("-vl", "--vlog", help = "save visual log", action = 'store_true', default = False)
 
@@ -392,16 +388,32 @@ if (args["vlog"]) :
     # Draw total result
     cv.putText(image, ("Result=" + str(result)), (32, 64), 
                 cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
-    write_image(image_path, image)
-
-# Show histgram
-if (args['graph'] == True) :
+    # Create visual log folder.
+    report_dir = make_report_dir()
+    # write vlog image
+    base_name = os.path.basename(image_path)
+    (base_noext, ext) = os.path.splitext(base_name)
+    vlog_file_path = os.path.join(report_dir, base_noext + "_vlog" + ext)
+    cv.imwrite(vlog_file_path, image)
+    if (verbose >= 1) : 
+        print("visual log=", vlog_file_path)
+    # Save Edge image
+    edge_file_path = os.path.join(report_dir, base_noext + "_edge" + ext)
+    cv.imwrite(edge_file_path, edge_image)
+    if (verbose >= 1) : 
+        print("edge image=", edge_file_path)
+    # Save histogram image
     import matplotlib.pyplot as plt
-    (_, base_name) = os.path.split(image_path)
-    hist_title = str(max_power) + ' / ' + base_name
     plt.stairs(hist, bins, fill = True)
-    plt.title(hist_title)
-    plt.show()
+    plt.title(base_name)
+    plt.xlabel("Edge Power")
+    plt.ylabel("Count")
+    plt.grid()
+    hist_file_path = os.path.join(report_dir, base_noext + "_hist.png")
+    plt.savefig(hist_file_path, dpi = 100)
+    plt.close()
+    if (verbose >= 1) : 
+        print("histogram=", hist_file_path) 
 
 # Return value to OS
 if (result > MAX_RESULT) :

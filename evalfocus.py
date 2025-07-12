@@ -62,6 +62,11 @@ class COLOR :
     MAGENTA = (255, 0, 255) ; CYAN = (255, 255, 0) ; YELLOW = (0, 255, 255)
     WHITE = (255, 255, 255)
 
+def ceil_y_limit(y) :
+    d = len(str(int(y)))
+    p = (10 ** (d-1))
+    return (int(y / p) + 1) * p
+
 # Write visual log image to home folder.
 def make_report_dir(sub_dir="vlog") :
     homedir = os.environ['HOME']
@@ -256,13 +261,8 @@ for img_it in faces :
         # Laplacian conversion
         edge_image = cv.Laplacian(gray_image, filter_ddepth, filter_kernel)
 
-    # Show edge image by option.
-    if (args["edge"]) :
-           cv.imshow("Edges", edge_image)
-           cv.waitKey(VISUAL_WAIT)
-
     # Get histogram from edge image.
-    hist, bins = np.histogram(edge_image, bins = HIST_BINS, range = (0,255))
+    (hist, bins) = np.histogram(edge_image, bins = HIST_BINS, range = (0,256))
     power_length = len(hist)
 
     # Determine start/end for power calculation.
@@ -385,19 +385,23 @@ if (args["vlog"]) :
         cv.circle(image, [int(max_face[FACE.REYE_X]), int(max_face[FACE.REYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
         cv.circle(image, [int(max_face[FACE.LEYE_X]), int(max_face[FACE.LEYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
         cv.circle(image, [int(max_face[FACE.NOSE_X]), int(max_face[FACE.NOSE_Y])], 5, COLOR.GREEN, -1, cv.LINE_AA)
-    # Draw total result
-    cv.putText(image, ("Result=" + str(result)), (32, 64), 
-                cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
-    # Create visual log folder.
-    report_dir = make_report_dir()
-    # write vlog image
+        # Draw total result
+        cv.putText(image, ("Result=" + str(result)), (32, 64), 
+                    cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
+        # Create visual log folder.
+        report_dir = make_report_dir()
+        # write vlog image
+        base_name = os.path.basename(image_path)
+        (base_noext, ext) = os.path.splitext(base_name)
+        vlog_file_path = os.path.join(report_dir, base_noext + "_vlog" + ext)
+        cv.imwrite(vlog_file_path, image)
+        if (verbose >= 1) : 
+            print("visual log=", vlog_file_path)
+    #End if (faces_count >= 1)
+
+    # Save Edge image
     base_name = os.path.basename(image_path)
     (base_noext, ext) = os.path.splitext(base_name)
-    vlog_file_path = os.path.join(report_dir, base_noext + "_vlog" + ext)
-    cv.imwrite(vlog_file_path, image)
-    if (verbose >= 1) : 
-        print("visual log=", vlog_file_path)
-    # Save Edge image
     edge_file_path = os.path.join(report_dir, base_noext + "_edge" + ext)
     cv.imwrite(edge_file_path, edge_image)
     if (verbose >= 1) : 
@@ -409,11 +413,13 @@ if (args["vlog"]) :
     plt.xlabel("Edge Power")
     plt.ylabel("Count")
     plt.grid()
+    plt.ylim(0, ceil_y_limit(hist[1]))
     hist_file_path = os.path.join(report_dir, base_noext + "_hist.png")
     plt.savefig(hist_file_path, dpi = 100)
     plt.close()
     if (verbose >= 1) : 
         print("histogram=", hist_file_path) 
+# End of visual log.
 
 # Return value to OS
 if (result > MAX_RESULT) :

@@ -27,7 +27,7 @@ MAX_BINS = (HIST_BINS - 1)
 POWER_END_GATE = ((HIST_BINS // 8) * 3)
 POWER_END_DESCEND = ((HIST_BINS // 8) * 6)
 HIST_RISE = 2
-POWER_RANGE = 6
+POWER_RANGE = 8
 # Constants for power deduction
 MOUTH_DEDUCT = 0.8
 EYE_DEDUCT = 0.75
@@ -43,7 +43,7 @@ SIGMA = 0.33
 ERROR_CANTOPEN = 2
 # Vlog conqstants
 IMPOSE_OFFSET = 16
-PLOT_DPI = 72
+PLOT_DPI = 80
 # FaceDetectorYN result index
 class FACE :
     X = 0 ; Y = 1
@@ -200,7 +200,6 @@ faces = faces if faces is not None else [[
 count = 0
 max_power = -1
 max_index = -1
-max_foulier = -1
 
 # Iterate loop with detected faces.
 for img_it in faces :
@@ -413,11 +412,10 @@ if (args["vlog"]) :
 
     plt.stairs(hist, bins, fill = True)
     plt.title(base_name)
-    plt.xlabel("Edge Power")
+    plt.xlabel("Edge Intensity")
     plt.ylabel("Count")
     plt.grid()
     plt.ylim(0, ceil_y_limit(hist[ (HIST_BINS // 4) ]))
-    hist_file_path = os.path.join(report_dir, base_noext + "_hist.png")
     buffer = io.BytesIO()
     plt.savefig(buffer, dpi = PLOT_DPI)
     plt.close()
@@ -427,8 +425,6 @@ if (args["vlog"]) :
     plot_image = cv.cvtColor(plot_image, cv.COLOR_RGBA2BGR)
     # overlay histogram image on right bottom of image.
     (plot_height, plot_width) = plot_image.shape[:2]
-    print("plot_height=", plot_height, ", plot_width=", plot_width)
-    print("resized_height=", resized_height, ", resized_width=", resized_width)
     roi_y2 = resized_height - IMPOSE_OFFSET
     roi_y1 = roi_y2 - plot_height
     roi_x2 = resized_width - IMPOSE_OFFSET

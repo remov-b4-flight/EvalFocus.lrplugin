@@ -394,11 +394,16 @@ if (args["vlog"]) :
 
     #overlay edge image on left bottom of image.
     edge_image = cv.cvtColor(edge_image, cv.COLOR_GRAY2BGR)
-    if faces_count == 0 :
-        edge_image = cv.resize(edge_image, (resized_width//3, resized_height//3))
     (edge_height, edge_width) = edge_image.shape[:2]
-    print("edge_height=", edge_height, ", edge_width=", edge_width)
-    print("resized_height=", resized_height, ", resized_width=", resized_width)
+    if faces_count == 0 :
+        crop_height = edge_height // 3
+        crop_width = edge_width // 3
+        x1 = crop_width
+        x2 = x1 + crop_width
+        y1 = crop_height
+        y2 = y1 + crop_height
+        edge_image = edge_image[y1 : y2, x1 : x2]
+        (edge_height, edge_width) = edge_image.shape[:2]
     roi_y2 = resized_height - IMPOSE_OFFSET
     roi_y1 = roi_y2 - edge_height
     roi_x1 = IMPOSE_OFFSET

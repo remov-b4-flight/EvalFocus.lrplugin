@@ -8,7 +8,6 @@ import cv2 as cv
 import os
 import sys
 import numpy as np
-#import threading as th
 
 # Constants
 PIXEL10K = 10000
@@ -20,8 +19,6 @@ MAX_RESULT = 255
 # Constants for resize 
 SMALL_LONGSIDE = 2000
 BIG_LONGSIDE = 4000
-# User interface
-VISUAL_WAIT = 1000  # 1 sec
 # Constants for face recognition 
 SCORE_THRESHOLD = 0.75
 # Constants for power estimation
@@ -44,7 +41,9 @@ FOULIER_MASK = 8
 SIGMA = 0.33
 # Error code for OS
 ERROR_CANTOPEN = 2
-
+# Vlog conqstants
+IMPOSE_OFFSET = 16
+PLOT_DPI = 72
 # FaceDetectorYN result index
 class FACE :
     X = 0 ; Y = 1
@@ -392,34 +391,51 @@ if (args["vlog"]) :
         # Draw total result
         cv.putText(image, ("Result=" + str(result)), (32, 64), 
                     cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
-        #overlay edge image
-        edge_image = cv.cvtColor(edge_image, cv.COLOR_GRAY2BGR)
-        (edge_height, edge_width) = edge_image.shape[:2]
-        roi_y2 = resized_height - 32
-        roi_y1 = roi_y2 - edge_height
-        roi_x1 = 32
-        roi_x2 = roi_x1 + edge_width
-        image[roi_y1 : roi_y2, roi_x1 : roi_x2] = edge_image
-        # write vlog image
-        vlog_file_path = os.path.join(report_dir, base_noext + "_vlog" + ext)
-        cv.imwrite(vlog_file_path, image)
-        if (verbose >= 1) : 
-            print("visual log=", vlog_file_path)
     #End if (faces_count >= 1)
+
+    #overlay edge image on left bottom of image.
+    edge_image = cv.cvtColor(edge_image, cv.COLOR_GRAY2BGR)
+    (edge_height, edge_width) = edge_image.shape[:2]
+    roi_y2 = resized_height - IMPOSE_OFFSET
+    roi_y1 = roi_y2 - edge_height
+    roi_x1 = IMPOSE_OFFSET
+    roi_x2 = roi_x1 + edge_width
+    image[roi_y1 : roi_y2, roi_x1 : roi_x2] = edge_image
 
     # Save histogram image
     import matplotlib.pyplot as plt
+    import io
+    from PIL import Image
+
     plt.stairs(hist, bins, fill = True)
     plt.title(base_name)
     plt.xlabel("Edge Power")
     plt.ylabel("Count")
     plt.grid()
-    plt.ylim(0, ceil_y_limit(hist[1]))
+    plt.ylim(0, ceil_y_limit(hist[ (HIST_BINS // 4) ]))
     hist_file_path = os.path.join(report_dir, base_noext + "_hist.png")
-    plt.savefig(hist_file_path, dpi = 100)
+    buffer = io.BytesIO()
+    plt.savefig(buffer, dpi = PLOT_DPI)
     plt.close()
+    buffer.seek(0)
+    plot_image = Image.open(buffer)
+    plot_image = np.array(plot_image)
+    plot_image = cv.cvtColor(plot_image, cv.COLOR_RGBA2BGR)
+    # overlay histogram image on right bottom of image.
+    (plot_height, plot_width) = plot_image.shape[:2]
+    print("plot_height=", plot_height, ", plot_width=", plot_width)
+    print("resized_height=", resized_height, ", resized_width=", resized_width)
+    roi_y2 = resized_height - IMPOSE_OFFSET
+    roi_y1 = roi_y2 - plot_height
+    roi_x2 = resized_width - IMPOSE_OFFSET
+    roi_x1 = roi_x2 - plot_width
+    image[roi_y1 : roi_y2, roi_x1 : roi_x2] = plot_image
+    # write vlog image
+    vlog_file_path = os.path.join(report_dir, base_noext + "_vlog" + ext)
+    cv.imwrite(vlog_file_path, image)
     if (verbose >= 1) : 
-        print("histogram=", hist_file_path) 
+        print("visual log=", vlog_file_path)
+
 # End of visual log.
 
 # Return value to OS

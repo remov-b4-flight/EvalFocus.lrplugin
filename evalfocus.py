@@ -364,6 +364,10 @@ if (verbose >= 1) :
 
 # Make 'visual log' by option.
 if (args["vlog"]) :
+    # Create visual log folder.
+    report_dir = make_report_dir()
+    base_name = os.path.basename(image_path)
+    (base_noext, ext) = os.path.splitext(base_name)
     # Draw result for face has max power
     if(faces_count >= 1) :
         vlog_line = max(resized_width, resized_height) // 1000
@@ -388,24 +392,21 @@ if (args["vlog"]) :
         # Draw total result
         cv.putText(image, ("Result=" + str(result)), (32, 64), 
                     cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
-        # Create visual log folder.
-        report_dir = make_report_dir()
+        #overlay edge image
+        edge_image = cv.cvtColor(edge_image, cv.COLOR_GRAY2BGR)
+        (edge_height, edge_width) = edge_image.shape[:2]
+        roi_y2 = resized_height - 32
+        roi_y1 = roi_y2 - edge_height
+        roi_x1 = 32
+        roi_x2 = roi_x1 + edge_width
+        image[roi_y1 : roi_y2, roi_x1 : roi_x2] = edge_image
         # write vlog image
-        base_name = os.path.basename(image_path)
-        (base_noext, ext) = os.path.splitext(base_name)
         vlog_file_path = os.path.join(report_dir, base_noext + "_vlog" + ext)
         cv.imwrite(vlog_file_path, image)
         if (verbose >= 1) : 
             print("visual log=", vlog_file_path)
     #End if (faces_count >= 1)
 
-    # Save Edge image
-    base_name = os.path.basename(image_path)
-    (base_noext, ext) = os.path.splitext(base_name)
-    edge_file_path = os.path.join(report_dir, base_noext + "_edge" + ext)
-    cv.imwrite(edge_file_path, edge_image)
-    if (verbose >= 1) : 
-        print("edge image=", edge_file_path)
     # Save histogram image
     import matplotlib.pyplot as plt
     plt.stairs(hist, bins, fill = True)

@@ -388,14 +388,18 @@ if (args["vlog"]) :
         cv.circle(image, [int(max_face[FACE.REYE_X]), int(max_face[FACE.REYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
         cv.circle(image, [int(max_face[FACE.LEYE_X]), int(max_face[FACE.LEYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
         cv.circle(image, [int(max_face[FACE.NOSE_X]), int(max_face[FACE.NOSE_Y])], 5, COLOR.GREEN, -1, cv.LINE_AA)
-        # Draw total result
-        cv.putText(image, ("Result=" + str(result)), (32, 64), 
+    # End if (faces_count >= 1)
+    # Draw total result
+    cv.putText(image, ("Result=" + str(result)), (32, 64), 
                     cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
-    #End if (faces_count >= 1)
 
     #overlay edge image on left bottom of image.
     edge_image = cv.cvtColor(edge_image, cv.COLOR_GRAY2BGR)
+    if faces_count == 0 :
+        edge_image = cv.resize(edge_image, (resized_width//3, resized_height//3))
     (edge_height, edge_width) = edge_image.shape[:2]
+    print("edge_height=", edge_height, ", edge_width=", edge_width)
+    print("resized_height=", resized_height, ", resized_width=", resized_width)
     roi_y2 = resized_height - IMPOSE_OFFSET
     roi_y1 = roi_y2 - edge_height
     roi_x1 = IMPOSE_OFFSET

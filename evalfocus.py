@@ -210,7 +210,7 @@ for img_it in faces :
     face_width = int(img_it[FACE.WIDTH])
     face_height = int(img_it[FACE.HEIGHT])
     if (verbose >= 2) :
-        print("width={0}, height={1}".format(face_width, face_height), end=", ")
+        print("width={0}, height={1}".format(face_width, face_height), end = ", ")
 
     # If face size is too small, skip it.
     face_pixels = face_width * face_height
@@ -223,19 +223,19 @@ for img_it in faces :
     face_rmouth_x = int(img_it[FACE.RMOUTH_X])
     face_lmouth_x = int(img_it[FACE.LMOUTH_X])
     if (faces_count >= 1 and verbose >= 3) :
-        print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end=", ")
+        print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end = ", ")
 
     # Get eye detecting result
     face_leye_x = int(img_it[FACE.LEYE_X])
     face_reye_x = int(img_it[FACE.REYE_X])
     if (faces_count >= 1 and verbose >= 3) :
-        print("eye=({0},{1})".format(face_reye_x, face_leye_x), end=", ")
+        print("eye=({0},{1})".format(face_reye_x, face_leye_x), end = ", ")
 
     # Get nose detecting result
     face_nose_x = int(img_it[FACE.NOSE_X])
     face_nose_y = int(img_it[FACE.NOSE_Y])
     if (faces_count >= 1 and verbose >= 3) :
-        print("nose=({0},{1})".format(face_nose_x, face_nose_y), end=", ")
+        print("nose=({0},{1})".format(face_nose_x, face_nose_y), end = ", ")
 
     # Get face detecting result
     face_score = round(img_it[FACE.SCORE], 2) if faces_count >= 1 else 0.0
@@ -246,7 +246,7 @@ for img_it in faces :
     img_y2 = img_y1 + int(img_it[FACE.HEIGHT])
     crop_image = image[img_y1 : img_y2, img_x1 : img_x2]
     if (verbose >= 5) :
-        print ("image x1={0},x2={1},y1={2},y2={3}".format(img_x1,img_x2,img_y1,img_y2))
+        print ("image x1={0},x2={1},y1={2},y2={3}".format(img_x1, img_x2, img_y1, img_y2))
 
     # Grayscale conversion.
     gray_image = cv.cvtColor(crop_image, cv.COLOR_BGR2GRAY)
@@ -273,7 +273,7 @@ for img_it in faces :
             power_end = i
         # Find hist[] rising point        
         elif (power_end != 0 and hist[i] != 0 and (hist[i + 1] / hist[i]) > HIST_RISE) :
-                power_start = i
+            power_start = i
     # Limit power_start by POWER_RANGE.
     if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
         power_start = power_end - POWER_RANGE + 1
@@ -392,25 +392,23 @@ if (args["vlog"]) :
     cv.putText(image, ("Result=" + str(result)), (32, 64), 
                     cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
 
-    #overlay edge image on left bottom of image.
+    # Overlay edge image on left bottom of image.
     edge_image = cv.cvtColor(edge_image, cv.COLOR_GRAY2BGR)
     (edge_height, edge_width) = edge_image.shape[:2]
     if faces_count == 0 :
+        # If no face detected(size of edge image = resized image), crop edge image to 1/3 of image.
         crop_height = edge_height // 3
         crop_width = edge_width // 3
-        x1 = crop_width
-        x2 = x1 + crop_width
-        y1 = crop_height
-        y2 = y1 + crop_height
+        (x1, y1) = (crop_width, crop_height)
+        (x2, y2) = (x1 + crop_width, y1 + crop_height)
         edge_image = edge_image[y1 : y2, x1 : x2]
         (edge_height, edge_width) = edge_image.shape[:2]
-    roi_y2 = resized_height - IMPOSE_OFFSET
-    roi_y1 = roi_y2 - edge_height
-    roi_x1 = IMPOSE_OFFSET
-    roi_x2 = roi_x1 + edge_width
+    (roi_x1, roi_y1) = (IMPOSE_OFFSET, resized_height - IMPOSE_OFFSET - edge_height)
+    (roi_x2, roi_y2) = (roi_x1 + edge_width, roi_y1 + edge_height)
+    cv.rectangle(image, (roi_x1, roi_y1, roi_x2, roi_y2), COLOR.BLUE, vlog_line)
     image[roi_y1 : roi_y2, roi_x1 : roi_x2] = edge_image
 
-    # Save histogram image
+    # Overlay histogram image
     import matplotlib.pyplot as plt
     import io
     from PIL import Image

@@ -405,7 +405,7 @@ if (args["vlog"]) :
         (edge_height, edge_width) = edge_image.shape[:2]
     (roi_x1, roi_y1) = (IMPOSE_OFFSET, resized_height - IMPOSE_OFFSET - edge_height)
     (roi_x2, roi_y2) = (roi_x1 + edge_width, roi_y1 + edge_height)
-    cv.rectangle(image, (roi_x1, roi_y1, roi_x2, roi_y2), COLOR.BLUE, vlog_line)
+    cv.rectangle(image, (roi_x1, roi_y1),(roi_x2, roi_y2), COLOR.BLUE, vlog_line)
     image[roi_y1 : roi_y2, roi_x1 : roi_x2] = edge_image
 
     # Overlay histogram image

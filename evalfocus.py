@@ -122,7 +122,7 @@ ap.add_argument("-k", help = "filter kernel", type = int, choices = [1, 3, 5, 7,
 ap.add_argument("-d", help = "filter depth", type = int, choices = [8, 32], default = 8)
 ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
-ap.add_argument("-nm", "--normalize", help = "normalize", action = 'store_true', default = True)
+ap.add_argument("-nm", "--normalize", help = "normalize", action = 'store_true', default = False)
 ap.add_argument("-vl", "--vlog", help = "save visual log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
@@ -170,8 +170,8 @@ image = cv.resize(original_image, None, fx=factor, fy=factor,
                     interpolation=cv.INTER_NEAREST_EXACT)
 
 # Normalize image if option is set.
-if (args["normalize"]) :
-    image = cv.normalize(image, None, 0, 255, cv.NORM_MINMAX)
+#if (args["normalize"]) :
+#    image = cv.normalize(image, None, 0, 255, cv.NORM_MINMAX)
 
 if (verbose >= 2) : 
     print("resized image=", image.shape)
@@ -247,6 +247,10 @@ for img_it in faces :
     crop_image = image[img_y1 : img_y2, img_x1 : img_x2]
     if (verbose >= 5) :
         print ("image x1={0},x2={1},y1={2},y2={3}".format(img_x1, img_x2, img_y1, img_y2))
+
+    if (faces_count == 0 or args["normalize"]) :
+        # Normalize image if option is set or face not found.
+        crop_image = cv.normalize(crop_image, None, 0, 255, cv.NORM_MINMAX)
 
     # Grayscale conversion.
     gray_image = cv.cvtColor(crop_image, cv.COLOR_BGR2GRAY)

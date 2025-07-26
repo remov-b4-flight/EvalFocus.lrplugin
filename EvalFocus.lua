@@ -77,6 +77,8 @@ LrTasks.startAsyncTask( function ()
 		ProgressBar:setPortionComplete(i, countPhotos)
 	end --end of for photos loop
 	ProgressBar:done()
-	LrSelection.selectNone()
+	if (#CurrentCatalog:getTargetPhotos() > 1) then
+		LrSelection.selectNone()
+	end
 end ) --end of startAsyncTask function()
 return

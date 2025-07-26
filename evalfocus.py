@@ -169,10 +169,6 @@ if (verbose >= 2) :
 image = cv.resize(original_image, None, fx=factor, fy=factor, 
                     interpolation=cv.INTER_NEAREST_EXACT)
 
-# Normalize image if option is set.
-#if (args["normalize"]) :
-#    image = cv.normalize(image, None, 0, 255, cv.NORM_MINMAX)
-
 if (verbose >= 2) : 
     print("resized image=", image.shape)
 

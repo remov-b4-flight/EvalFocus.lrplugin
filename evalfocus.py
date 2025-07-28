@@ -211,7 +211,8 @@ for img_it in faces :
     # If face size is too small, skip it.
     face_pixels = face_width * face_height
     if ((face_pixels / resized_pixels) < IGNORE_FACE_FACTOR) :
-        print("It's too small face, skipped.")
+        if (verbose >= 1) : 
+            print("It's too small face, skipped.")
         count += 1
         continue
 
@@ -359,6 +360,8 @@ else :
 # Output result to stdout.
 if (verbose >= 1) : 
     print("result=", result)
+else :
+    print(image_path, result, sep = '\t')
 
 # Make 'visual log' by option.
 if (args["vlog"]) :
@@ -438,8 +441,7 @@ if (args["vlog"]) :
     cv.imwrite(vlog_file_path, image)
     if (verbose >= 1) : 
         print("visual log=", vlog_file_path)
-
-# End of visual log.
+    # End of visual log.
 
 # Return value to OS
 if (result > MAX_RESULT) :

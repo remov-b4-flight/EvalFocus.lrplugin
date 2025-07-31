@@ -23,7 +23,7 @@ BIG_LONGSIDE = 4000
 SCORE_THRESHOLD = 0.75
 # Constants for power estimation
 HIST_BINS = 32
-MAX_BINS = (HIST_BINS - 1)
+MAX_BIN_INDEX = (HIST_BINS - 1)
 POWER_END_GATE = ((HIST_BINS // 8) * 3)
 POWER_END_DESCEND = ((HIST_BINS // 8) * 6)
 HIST_RISE = 2
@@ -268,16 +268,18 @@ for img_it in faces :
     power_start = 0
     power_end = 0
     # Seeking power_start and power_end.
-    for i in range((power_length - 1), 0, -1) :
+    for i in range((power_length - 1), ((power_length // 3) * 2), -1) :
         # Find first point of hist[] not zero
         if (power_end == 0 and hist[i] != 0) :
             power_end = i
-        # Find hist[] rising point        
-        elif (power_end != 0 and hist[i] != 0 and (hist[i + 1] / hist[i]) > HIST_RISE) :
-            power_start = i
-    # Limit power_start by POWER_RANGE.
-    if (power_start == 0 or (power_end - power_start) > POWER_RANGE ) :
-        power_start = power_end - POWER_RANGE + 1
+            break
+    # if power_end is not found, edge image has no edge, skip power calculation.
+    if (power_end == 0) :
+        power_start = power_length - 1
+        power_end = power_length - 1
+    else :
+        power_start = power_end - (POWER_RANGE - 1)
+        if (power_start < 0) : power_start = 0
 
     if (verbose >= 3) : 
         print("power_start=", power_start, end=", ")
@@ -293,10 +295,10 @@ for img_it in faces :
     for i in range(power_start, power_end + 1) :
         power += hist[i] * i
     # Power deducted by dispartion of histgrom
-    if (power_end == MAX_BINS) :
+    if (power_end == MAX_BIN_INDEX) :
         power *= 1.25
     else : 
-        if (power_end == (MAX_BINS - 1)) :
+        if (power_end == (MAX_BIN_INDEX - 1)) :
             power *= 1.1
         if (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
             power *= 0.75
@@ -370,9 +372,10 @@ if (args["vlog"]) :
     base_name = os.path.basename(image_path)
     (base_noext, ext) = os.path.splitext(base_name)
     # Draw result for face has max power
+    vlog_line = max(resized_width, resized_height) // 1000
+    if (vlog_line < 3) : vlog_line = 3
+
     if(faces_count >= 1) :
-        vlog_line = max(resized_width, resized_height) // 1000
-        if (vlog_line < 3) : vlog_line = 3
 
         box = list(map(int, max_face[:4]))
         max_x = int(max_face[FACE.X])

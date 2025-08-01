@@ -61,7 +61,7 @@ class FACE :
 class COLOR :
     RED = (0, 0, 255) ; BLUE = (255, 0, 0) ; GREEN = (0, 255, 0)
     MAGENTA = (255, 0, 255) ; CYAN = (255, 255, 0) ; YELLOW = (0, 255, 255)
-    WHITE = (255, 255, 255)
+    WHITE = (255, 255, 255) ; MID_YELLOW = (0, 192, 192)
 
 class NORMALIZE :
     FORCE_ON = 1
@@ -411,7 +411,7 @@ if (args["vlog"]) :
 
         cv.rectangle(resized_image, box, COLOR.BLUE, vlog_line)
         cv.putText(resized_image, str(face_score), (max_x, (max_y - 8)), 
-                    cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 3)
+                    cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 2)
         cv.circle(resized_image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
         cv.circle(resized_image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
         cv.circle(resized_image, [int(max_face[FACE.REYE_X]), int(max_face[FACE.REYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
@@ -421,6 +421,8 @@ if (args["vlog"]) :
     # Draw total result
     cv.putText(resized_image, ("Result=" + str(result)), (32, 64), 
                     cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
+    cv.putText(resized_image, ("StdDev=" + str(std_dev)), (32, 100), 
+                    cv.FONT_HERSHEY_SIMPLEX, 1.0, COLOR.MID_YELLOW, 2)
 
     # Overlay edge image on left bottom of image.
     edge_image = cv.cvtColor(edge_image, cv.COLOR_GRAY2BGR)
@@ -435,7 +437,7 @@ if (args["vlog"]) :
         (edge_height, edge_width) = edge_image.shape[:2]
     (roi_x1, roi_y1) = (IMPOSE_OFFSET, resized_height - IMPOSE_OFFSET - edge_height)
     (roi_x2, roi_y2) = (roi_x1 + edge_width, roi_y1 + edge_height)
-    cv.rectangle(resized_image, (roi_x1, roi_y1),(roi_x2, roi_y2), COLOR.BLUE, vlog_line)
+    cv.rectangle(resized_image, (roi_x1, roi_y1),(roi_x2, roi_y2), (COLOR.GREEN if (faces_count ==0) else COLOR.BLUE), vlog_line)
     resized_image[roi_y1 : roi_y2, roi_x1 : roi_x2] = edge_image
 
     # Overlay histogram image

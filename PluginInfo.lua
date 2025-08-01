@@ -13,11 +13,13 @@ local PluginInfo = {}
 function PluginInfo.startDialog( propertyTable )
 	propertyTable.AutoReject = prefs.AutoReject
 	propertyTable.RejectRange = prefs.RejectRange
+	propertyTable.Vlog = prefs.Vlog
 end
 
 function PluginInfo.endDialog( propertyTable ,why )
 	prefs.AutoReject = propertyTable.AutoReject
 	prefs.RejectRange = propertyTable.RejectRange
+	prefs.Vlog = propertyTable.Vlog
 end
 
 function PluginInfo.sectionsForTopOfDialog( viewFactory, propertyTable )
@@ -30,6 +32,7 @@ function PluginInfo.sectionsForTopOfDialog( viewFactory, propertyTable )
 				viewFactory:checkbox {title = 'AutoReject', value = bind 'AutoReject',},
 				viewFactory:edit_field {title = 'Range(less than)', min = 5, max = 255, width_in_chars = 3, value = bind 'RejectRange',},
 			},
+				viewFactory:checkbox {title = 'Make Visual Log', value = bind 'Vlog',},
 		},
 	}
 end

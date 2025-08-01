@@ -14,6 +14,16 @@ local LrSelection = import 'LrSelection'
 local LrFileUtils = import 'LrFileUtils'
 local prefs = import 'LrPrefs'.prefsForPlugin()
 
+if (prefs.AutoReject == nil) then
+	prefs.AutoReject = false
+end
+if (prefs.RejectRange == nil) then
+	prefs.RejectRange = 30
+end
+if (prefs.Vlog == nil) then
+	prefs.Vlog = false
+end
+
 --local LrLogger = import 'LrLogger'
 --local Logger = LrLogger(prefs.Title)
 --Logger:enable('logfile')
@@ -32,14 +42,11 @@ local LOG_FILE = '/' .. prefs.Title .. '.log'
 local LOGPATH = _PLUGIN.path .. LOG_FILE
 local LOG_CMDLINE = LOG_OPTION .. SEP .. REDIR .. SEP .. LOGPATH
 
-if (prefs.AutoReject == nil) then
-	prefs.AutoReject = false
-end
-if (prefs.RejectRange == nil) then
-	prefs.RejectRange = 30
-end
-
 local CurrentCatalog = LrApplication.activeCatalog()
+
+if prefs.Vlog == true then
+	OPTION = " -vl" .. OPTION
+end
 
 --Main part of this plugin.
 LrTasks.startAsyncTask( function ()

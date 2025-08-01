@@ -12,6 +12,9 @@ end
 if prefs.RejectRange == nil then
 	prefs.RejectRange = 30
 end
+if prefs.Vlog == nil then
+	prefs.Vlog = false
+end
 if prefs.Title == nil then
 	prefs.Title = "EvalFocus"
 end

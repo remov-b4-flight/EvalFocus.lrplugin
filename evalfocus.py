@@ -11,7 +11,8 @@ import numpy as np
 
 # Constants
 PIXEL10K = 10000
-NORMALIZE_THRESHOLD = 50.0 # Normalize image if stddev < this value.
+# Normalize image if stddev < this value.
+NORMALIZE_THRESHOLD = 50.0 
 # Ignore smaller face than this factor by entire of image.
 IGNORE_FACE_FACTOR = (0.075 / 100) # 0.075%
 # Constants for result range
@@ -227,8 +228,7 @@ for img_it in faces :
     # If face size is too small, skip it.
     face_pixels = face_width * face_height
     if ((face_pixels / resized_pixels) < IGNORE_FACE_FACTOR) :
-        if (verbose >= 1) : 
-            print("It's too small face, skipped.")
+        if (verbose >= 1) : print("It's too small face, skipped.")
         count += 1
         continue
 
@@ -260,17 +260,17 @@ for img_it in faces :
     crop_image = resized_image[img_y1 : img_y2, img_x1 : img_x2]
     if (verbose >= 5) :
         print ("image x1={0},x2={1},y1={2},y2={3}".format(img_x1, img_x2, img_y1, img_y2))
-    if (verbose >= 2) :
-        std_dev = round(np.std(crop_image), 2)
-        print("stddev={0}".format(std_dev), end=", ")
+
+    std_dev = round(np.std(crop_image), 2)
+    if (verbose >= 2) : print("stddev={0}".format(std_dev), end=", ")
 
     if (normalization == NORMALIZE.FORCE_ON or 
         normalization == NORMALIZE.BY_IMAGE and faces_count == 0 or std_dev < NORMALIZE_THRESHOLD) :
         # Normalize image if option is set or face not found.
-        print("normalize=on", end=", ")
+        if (verbose >= 2) : print("normalize=on", end=", ")
         crop_image = cv.normalize(crop_image, None, 0, 255, cv.NORM_MINMAX)
     else :
-        print("normalize=off", end=", ")
+        if (verbose >= 2) : print("normalize=off", end=", ")
 
     # Grayscale conversion.
     gray_image = cv.cvtColor(crop_image, cv.COLOR_BGR2GRAY)
@@ -333,17 +333,18 @@ for img_it in faces :
             power *= EYE_DEDUCT
         if (face_nose_x <= 0 and face_nose_y <= 0) :
             power *= NOSE_DEDUCT
+
     if (verbose >= 1) : 
         print("power=", power, end=", ")
 
     if (verbose >= 1 and faces_count >= 1) : 
         print("score=", face_score, end=", ")
+        
     # Flashing max_power
     if (power > max_power and power_end > POWER_END_GATE) : 
         max_power = power
         max_index = count
-    if (verbose >= 1) : 
-        print()
+    if (verbose >= 1) : print()
 
     count += 1
 # End iteration of faces.

@@ -11,6 +11,7 @@ import numpy as np
 
 # Constants
 PIXEL10K = 10000
+NORMALIZE_THRESHOLD = 50.0 # Normalize image if stddev < this value.
 # Ignore smaller face than this factor by entire of image.
 IGNORE_FACE_FACTOR = (0.075 / 100) # 0.075%
 # Constants for result range
@@ -60,6 +61,11 @@ class COLOR :
     RED = (0, 0, 255) ; BLUE = (255, 0, 0) ; GREEN = (0, 255, 0)
     MAGENTA = (255, 0, 255) ; CYAN = (255, 255, 0) ; YELLOW = (0, 255, 255)
     WHITE = (255, 255, 255)
+
+class NORMALIZE :
+    FORCE_ON = 1
+    FORCE_OFF = 0
+    BY_IMAGE = 2
 
 def ceil_y_limit(y) :
     d = len(str(int(y)))
@@ -122,7 +128,7 @@ ap.add_argument("-k", help = "filter kernel", type = int, choices = [1, 3, 5, 7,
 ap.add_argument("-d", help = "filter depth", type = int, choices = [8, 32], default = 8)
 ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
-ap.add_argument("-nm", "--normalize", help = "normalize", action = 'store_true', default = False)
+ap.add_argument("-nm", "--normalize", help = "normalize image", action = argparse.BooleanOptionalAction, default = argparse.SUPPRESS)
 ap.add_argument("-vl", "--vlog", help = "save visual log", action = 'store_true', default = False)
 
 args = vars(ap.parse_args())
@@ -131,6 +137,13 @@ args = vars(ap.parse_args())
 verbose = args["v"]
 filter_kernel = args["k"]
 filter_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U 
+if ("normalize" in args) :
+    if (args["normalize"] == True) :
+        normalization = NORMALIZE.FORCE_ON
+    else:
+        normalization = NORMALIZE.FORCE_OFF
+else:
+    normalization = NORMALIZE.BY_IMAGE
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 fd_model = os.path.join(script_path, args["model"])
@@ -166,17 +179,20 @@ factor = get_resize_factor(long_side)
 if (verbose >= 2) : 
     print("resize factor=", factor)
 
-image = cv.resize(original_image, None, fx=factor, fy=factor, 
+if (factor != 1.0) :
+    resized_image = cv.resize(original_image, None, fx=factor, fy=factor, 
                     interpolation=cv.INTER_NEAREST_EXACT)
+else :
+    resized_image = original_image.copy()
 
 if (verbose >= 2) : 
-    print("resized image=", image.shape)
+    print("resized image=", resized_image.shape)
 
 # Detecting faces.
-resized_height, resized_width, _ = image.shape
+resized_height, resized_width, _ = resized_image.shape
 resized_pixels = resized_height * resized_width
 fd = cv.FaceDetectorYN_create(fd_model, "", (resized_width, resized_height), SCORE_THRESHOLD)
-_, faces = fd.detect(image)
+_, faces = fd.detect(resized_image)
 
 faces_count = len(faces) if faces is not None else 0
 if (verbose >= 1) : 
@@ -241,13 +257,20 @@ for img_it in faces :
     img_x2 = img_x1 + int(img_it[FACE.WIDTH])
     img_y1 = 0 if (img_it[FACE.Y] < 0) else int(img_it[FACE.Y])
     img_y2 = img_y1 + int(img_it[FACE.HEIGHT])
-    crop_image = image[img_y1 : img_y2, img_x1 : img_x2]
+    crop_image = resized_image[img_y1 : img_y2, img_x1 : img_x2]
     if (verbose >= 5) :
         print ("image x1={0},x2={1},y1={2},y2={3}".format(img_x1, img_x2, img_y1, img_y2))
+    if (verbose >= 2) :
+        std_dev = round(np.std(crop_image), 2)
+        print("stddev={0}".format(std_dev), end=", ")
 
-    if (faces_count == 0 or args["normalize"]) :
+    if (normalization == NORMALIZE.FORCE_ON or 
+        normalization == NORMALIZE.BY_IMAGE and faces_count == 0 or std_dev < NORMALIZE_THRESHOLD) :
         # Normalize image if option is set or face not found.
+        print("normalize=on", end=", ")
         crop_image = cv.normalize(crop_image, None, 0, 255, cv.NORM_MINMAX)
+    else :
+        print("normalize=off", end=", ")
 
     # Grayscale conversion.
     gray_image = cv.cvtColor(crop_image, cv.COLOR_BGR2GRAY)
@@ -385,17 +408,17 @@ if (args["vlog"]) :
         max_lmouth_x = int(max_face[FACE.LMOUTH_X])
         max_lmouth_y = int(max_face[FACE.LMOUTH_Y])
 
-        cv.rectangle(image, box, COLOR.BLUE, vlog_line)
-        cv.putText(image, str(face_score), (max_x, (max_y - 8)), 
+        cv.rectangle(resized_image, box, COLOR.BLUE, vlog_line)
+        cv.putText(resized_image, str(face_score), (max_x, (max_y - 8)), 
                     cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 3)
-        cv.circle(image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
-        cv.circle(image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
-        cv.circle(image, [int(max_face[FACE.REYE_X]), int(max_face[FACE.REYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
-        cv.circle(image, [int(max_face[FACE.LEYE_X]), int(max_face[FACE.LEYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
-        cv.circle(image, [int(max_face[FACE.NOSE_X]), int(max_face[FACE.NOSE_Y])], 5, COLOR.GREEN, -1, cv.LINE_AA)
+        cv.circle(resized_image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
+        cv.circle(resized_image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
+        cv.circle(resized_image, [int(max_face[FACE.REYE_X]), int(max_face[FACE.REYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
+        cv.circle(resized_image, [int(max_face[FACE.LEYE_X]), int(max_face[FACE.LEYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
+        cv.circle(resized_image, [int(max_face[FACE.NOSE_X]), int(max_face[FACE.NOSE_Y])], 5, COLOR.GREEN, -1, cv.LINE_AA)
     # End if (faces_count >= 1)
     # Draw total result
-    cv.putText(image, ("Result=" + str(result)), (32, 64), 
+    cv.putText(resized_image, ("Result=" + str(result)), (32, 64), 
                     cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
 
     # Overlay edge image on left bottom of image.
@@ -411,8 +434,8 @@ if (args["vlog"]) :
         (edge_height, edge_width) = edge_image.shape[:2]
     (roi_x1, roi_y1) = (IMPOSE_OFFSET, resized_height - IMPOSE_OFFSET - edge_height)
     (roi_x2, roi_y2) = (roi_x1 + edge_width, roi_y1 + edge_height)
-    cv.rectangle(image, (roi_x1, roi_y1),(roi_x2, roi_y2), COLOR.BLUE, vlog_line)
-    image[roi_y1 : roi_y2, roi_x1 : roi_x2] = edge_image
+    cv.rectangle(resized_image, (roi_x1, roi_y1),(roi_x2, roi_y2), COLOR.BLUE, vlog_line)
+    resized_image[roi_y1 : roi_y2, roi_x1 : roi_x2] = edge_image
 
     # Overlay histogram image
     import matplotlib.pyplot as plt
@@ -438,10 +461,10 @@ if (args["vlog"]) :
     roi_y1 = roi_y2 - plot_height
     roi_x2 = resized_width - IMPOSE_OFFSET
     roi_x1 = roi_x2 - plot_width
-    image[roi_y1 : roi_y2, roi_x1 : roi_x2] = plot_image
+    resized_image[roi_y1 : roi_y2, roi_x1 : roi_x2] = plot_image
     # write vlog image
     vlog_file_path = os.path.join(report_dir, base_noext + "_vlog" + ext)
-    cv.imwrite(vlog_file_path, image)
+    cv.imwrite(vlog_file_path, resized_image)
     if (verbose >= 1) : 
         print("visual log=", vlog_file_path)
     # End of visual log.

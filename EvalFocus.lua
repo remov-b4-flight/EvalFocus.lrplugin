@@ -66,8 +66,9 @@ LrTasks.startAsyncTask( function ()
 			local FilePath = PhotoIt:getRawMetadata('path')
 			local CommandLine = python .. SEP .. SCRIPT_PATH .. SEP .. OPTION .. SEP .. FilePath
 --			Logger:info(CommandLine)
-			-- only MSB 8 bits are valid
-			local return_value = LrTasks.execute(CommandLine) / 256
+			local stdin = io.popen(CommandLine, 'r')
+			local return_value = stdin:read('*n')
+			stdin:close()
 --			Logger:info('value=' .. return_value)
 			if (return_value >= MINRESULT) then 
 				CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()

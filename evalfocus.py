@@ -387,7 +387,7 @@ else :
 if (verbose >= 1) : 
     print("result=", result)
 else :
-    print(image_path, result, sep = '\t')
+    print(result)
 
 # Make 'visual log' by option.
 if (args["vlog"]) :

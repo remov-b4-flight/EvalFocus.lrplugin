@@ -76,7 +76,7 @@ LrTasks.startAsyncTask( function ()
 		if (PhotoIt:getRawMetadata('fileFormat') == 'JPG' and PhotoIt:getRawMetadata('fileSize') ~= nil ) then 
 			local FilePath = PhotoIt:getRawMetadata('path')
 			local CommandLine = python .. SEP .. SCRIPT_PATH .. SEP .. OPTION .. SEP .. FilePath
-			Logger:info(CommandLine)
+--			Logger:info(CommandLine)
 			local stdin = io.popen(CommandLine, 'r')
 			local eval_string = stdin:read('*a')
 			stdin:close()

@@ -4,6 +4,17 @@ EvalFocus.lrdevplugin
 @author @remov_b4_flight
 ]]
 
+-- split string from evalfocus.py
+function keyValueSplit(s, delim)
+	local result = {}
+	for match in (s..delim):gmatch("(.-)"..delim) do
+		local key, value = match:match("([^=]+)=([^=]+)")
+		if key and value then
+			result[key] = value
+		end
+	end
+	return result
+end
 -- Please specfy python in your local enviromnent.
 local python = '/opt/homebrew/bin/python3'
 
@@ -65,15 +76,20 @@ LrTasks.startAsyncTask( function ()
 		if (PhotoIt:getRawMetadata('fileFormat') == 'JPG' and PhotoIt:getRawMetadata('fileSize') ~= nil ) then 
 			local FilePath = PhotoIt:getRawMetadata('path')
 			local CommandLine = python .. SEP .. SCRIPT_PATH .. SEP .. OPTION .. SEP .. FilePath
---			Logger:info(CommandLine)
+			Logger:info(CommandLine)
 			local stdin = io.popen(CommandLine, 'r')
-			local return_value = stdin:read('*n')
+			local eval_string = stdin:read('*a')
 			stdin:close()
---			Logger:info('value=' .. return_value)
-			if (return_value >= MINRESULT) then 
+			local eval_table = keyValueSplit(eval_string, ',')
+			local result_value = tonumber(eval_table['value']) or NOTFOUND
+			local face_count = tonumber(eval_table['face_count']) or 0
+--			Logger:info('value=' .. result_value)
+--			Logger:info('face_count=' .. face_count)
+			if (result_value >= MINRESULT) then 
 				CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
-					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', return_value)
-					if (prefs.AutoReject == true and return_value < prefs.RejectRange) then
+					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', result_value)
+					PhotoIt:setPropertyForPlugin(_PLUGIN, 'face_count', face_count)
+					if (prefs.AutoReject == true and result_value < prefs.RejectRange) then
 						PhotoIt:setRawMetadata('pickStatus', -1)
 						PhotoIt:setRawMetadata('colorNameForLabel','blue')
 					end

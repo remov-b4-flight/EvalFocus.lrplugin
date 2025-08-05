@@ -23,6 +23,7 @@ LrTasks.startAsyncTask( function ()
 	CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', nil)
+				PhotoIt:setPropertyForPlugin(_PLUGIN, 'face_count', nil)
 			ProgressBar:setPortionComplete(i, countPhotos)
 		end --end of for photos loop
 		ProgressBar:done()

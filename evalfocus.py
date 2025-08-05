@@ -195,9 +195,9 @@ resized_pixels = resized_height * resized_width
 fd = cv.FaceDetectorYN_create(fd_model, "", (resized_width, resized_height), SCORE_THRESHOLD)
 _, faces = fd.detect(resized_image)
 
-faces_count = len(faces) if faces is not None else 0
+face_count = len(faces) if faces is not None else 0
 if (verbose >= 1) : 
-    print("faces=", faces_count)
+    print("faces=", face_count)
 
 # If any face not found, process entire of image.
 faces = faces if faces is not None else [[
@@ -235,23 +235,23 @@ for img_it in faces :
     # Get mouth detecting result
     face_rmouth_x = int(img_it[FACE.RMOUTH_X])
     face_lmouth_x = int(img_it[FACE.LMOUTH_X])
-    if (faces_count >= 1 and verbose >= 3) :
+    if (face_count >= 1 and verbose >= 3) :
         print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end = ", ")
 
     # Get eye detecting result
     face_leye_x = int(img_it[FACE.LEYE_X])
     face_reye_x = int(img_it[FACE.REYE_X])
-    if (faces_count >= 1 and verbose >= 3) :
+    if (face_count >= 1 and verbose >= 3) :
         print("eye=({0},{1})".format(face_reye_x, face_leye_x), end = ", ")
 
     # Get nose detecting result
     face_nose_x = int(img_it[FACE.NOSE_X])
     face_nose_y = int(img_it[FACE.NOSE_Y])
-    if (faces_count >= 1 and verbose >= 3) :
+    if (face_count >= 1 and verbose >= 3) :
         print("nose=({0},{1})".format(face_nose_x, face_nose_y), end = ", ")
 
     # Get face detecting result
-    face_score = round(img_it[FACE.SCORE], 2) if faces_count >= 1 else 0.0
+    face_score = round(img_it[FACE.SCORE], 2) if face_count >= 1 else 0.0
     # Crop face
     img_x1 = 0 if (img_it[FACE.X] < 0) else int(img_it[FACE.X]) 
     img_x2 = img_x1 + int(img_it[FACE.WIDTH])
@@ -265,7 +265,7 @@ for img_it in faces :
     if (verbose >= 2) : print("stddev={0}".format(std_dev), end=", ")
 
     if (normalization == NORMALIZE.FORCE_ON or 
-        normalization == NORMALIZE.BY_IMAGE and faces_count == 0 or std_dev < NORMALIZE_THRESHOLD) :
+        normalization == NORMALIZE.BY_IMAGE and face_count == 0 or std_dev < NORMALIZE_THRESHOLD) :
         # Normalize image if option is set or face not found.
         if (verbose >= 2) : print("normalize=on", end=", ")
         crop_image = cv.normalize(crop_image, None, 0, 255, cv.NORM_MINMAX)
@@ -326,7 +326,7 @@ for img_it in faces :
         if (POWER_END_GATE < power_end < POWER_END_DESCEND) : 
             power *= 0.75
     # Power deducted by face detection result
-    if (faces_count != 0) : 
+    if (face_count != 0) : 
         if (face_rmouth_x <= 0 and face_lmouth_x <= 0) : 
             power *= MOUTH_DEDUCT
         if (face_reye_x <= 0 and face_leye_x <= 0) : 
@@ -337,7 +337,7 @@ for img_it in faces :
     if (verbose >= 1) : 
         print("power=", power, end=", ")
 
-    if (verbose >= 1 and faces_count >= 1) : 
+    if (verbose >= 1 and face_count >= 1) : 
         print("score=", face_score, end=", ")
         
     # Flashing max_power
@@ -353,7 +353,7 @@ for img_it in faces :
 if (max_power < 0) :
     #It seems no face through POWER_GATE in image or too small face.
     result = 0
-    faces_count = 0
+    face_count = 0
 else :
     max_face = faces[max_index]
     max_width = int(max_face[FACE.WIDTH])
@@ -366,7 +366,7 @@ else :
     if (verbose >= 3) : 
         print("max width={0}, height={1}".format(max_width, max_height))
     # if face count is 0, use half of image size as ROI.
-    if (faces_count == 0) :
+    if (face_count == 0) :
         max_width /= 2
         max_height /= 2
 
@@ -387,7 +387,7 @@ else :
 if (verbose >= 1) : 
     print("result=", result)
 else :
-    print(result)
+    print("value={0},face_count={1}".format(result, face_count))
 
 # Make 'visual log' by option.
 if (args["vlog"]) :
@@ -399,7 +399,7 @@ if (args["vlog"]) :
     vlog_line = max(resized_width, resized_height) // 1000
     if (vlog_line < 3) : vlog_line = 3
 
-    if(faces_count >= 1) :
+    if(face_count >= 1) :
 
         box = list(map(int, max_face[:4]))
         max_x = int(max_face[FACE.X])
@@ -417,7 +417,7 @@ if (args["vlog"]) :
         cv.circle(resized_image, [int(max_face[FACE.REYE_X]), int(max_face[FACE.REYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
         cv.circle(resized_image, [int(max_face[FACE.LEYE_X]), int(max_face[FACE.LEYE_Y])], 5, COLOR.RED, -1, cv.LINE_AA)
         cv.circle(resized_image, [int(max_face[FACE.NOSE_X]), int(max_face[FACE.NOSE_Y])], 5, COLOR.GREEN, -1, cv.LINE_AA)
-    # End if (faces_count >= 1)
+    # End if (face_count >= 1)
     # Draw total result
     cv.putText(resized_image, ("Result=" + str(result)), (32, 64), 
                     cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
@@ -427,7 +427,7 @@ if (args["vlog"]) :
     # Overlay edge image on left bottom of image.
     edge_image = cv.cvtColor(edge_image, cv.COLOR_GRAY2BGR)
     (edge_height, edge_width) = edge_image.shape[:2]
-    if faces_count == 0 :
+    if face_count == 0 :
         # If no face detected(size of edge image = resized image), crop edge image to 1/3 of image.
         crop_height = edge_height // 3
         crop_width = edge_width // 3
@@ -437,7 +437,7 @@ if (args["vlog"]) :
         (edge_height, edge_width) = edge_image.shape[:2]
     (roi_x1, roi_y1) = (IMPOSE_OFFSET, resized_height - IMPOSE_OFFSET - edge_height)
     (roi_x2, roi_y2) = (roi_x1 + edge_width, roi_y1 + edge_height)
-    cv.rectangle(resized_image, (roi_x1, roi_y1),(roi_x2, roi_y2), (COLOR.GREEN if (faces_count ==0) else COLOR.BLUE), vlog_line)
+    cv.rectangle(resized_image, (roi_x1, roi_y1),(roi_x2, roi_y2), (COLOR.GREEN if (face_count ==0) else COLOR.BLUE), vlog_line)
     resized_image[roi_y1 : roi_y2, roi_x1 : roi_x2] = edge_image
 
     # Overlay histogram image

@@ -8,6 +8,7 @@ import cv2 as cv
 import os
 import sys
 import numpy as np
+import time
 
 # Constants
 PIXEL10K = 10000
@@ -153,6 +154,8 @@ fd_model = os.path.join(script_path, args["model"])
 if (verbose >= 5) : 
     print("model=", fd_model)
 
+start_point = time.perf_counter()
+
 image_path = args["file"]
 
 # Exists check for Model file.
@@ -187,8 +190,11 @@ if (factor != 1.0) :
 else :
     resized_image = original_image.copy()
 
+after_resize = time.perf_counter()
+
 if (verbose >= 2) : 
     print("resized image=", resized_image.shape)
+
 
 # Detecting faces.
 resized_height, resized_width, _ = resized_image.shape
@@ -198,6 +204,8 @@ if (args["face_detect"]) :
     _, faces = fd.detect(resized_image)
 else :
     faces = None
+
+after_fd = time.perf_counter()
 
 face_count = len(faces) if faces is not None else 0
 if (verbose >= 1) : 
@@ -392,6 +400,12 @@ if (verbose >= 1) :
     print("result=", result)
 else :
     print("value={0},face_count={1}".format(result, face_count))
+
+end_point = time.perf_counter()
+if (verbose >= 4) :
+    print("until resize time : {:.3f} sec.".format(after_resize - start_point))
+    print("until fd time: {:.3f} sec.".format(after_fd - start_point))
+    print("total time: {:.3f} sec.".format(end_point - start_point))
 
 # Make 'visual log' by option.
 if (args["vlog"]) :

@@ -127,6 +127,7 @@ ap.add_argument("file", help = "Image file to process.",)
 ap.add_argument("-v", help = "verbose outputs", action = 'count', default = 0)
 ap.add_argument("-k", help = "filter kernel", type = int, choices = [1, 3, 5, 7, 9], default = 5)
 ap.add_argument("-d", help = "filter depth", type = int, choices = [8, 32], default = 8)
+ap.add_argument("--face-detect", help = "face detect", action = argparse.BooleanOptionalAction, default = True)
 ap.add_argument("-so", "--sobel", help = "force sobel", action = 'store_true', default = False)
 ap.add_argument("-m", "--model", help = "model", default = "yunet.onnx")
 ap.add_argument("-nm", "--normalize", help = "normalize image", action = argparse.BooleanOptionalAction, default = argparse.SUPPRESS)
@@ -192,8 +193,11 @@ if (verbose >= 2) :
 # Detecting faces.
 resized_height, resized_width, _ = resized_image.shape
 resized_pixels = resized_height * resized_width
-fd = cv.FaceDetectorYN_create(fd_model, "", (resized_width, resized_height), SCORE_THRESHOLD)
-_, faces = fd.detect(resized_image)
+if (args["face_detect"]) :
+    fd = cv.FaceDetectorYN_create(fd_model, "", (resized_width, resized_height), SCORE_THRESHOLD)
+    _, faces = fd.detect(resized_image)
+else :
+    faces = None
 
 face_count = len(faces) if faces is not None else 0
 if (verbose >= 1) : 

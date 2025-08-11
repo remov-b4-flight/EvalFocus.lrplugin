@@ -23,8 +23,9 @@ MAX_RESULT = 255
 # Constants for resize
 SMALL_LONGSIDE = 2000
 BIG_LONGSIDE = 4000
-# Constants for face recognition
+# Constants for face detection
 SCORE_THRESHOLD = 0.75
+TOP_K = 25
 # Constants for power estimation
 HIST_BINS = 32
 MAX_BIN_INDEX = HIST_BINS - 1
@@ -222,7 +223,9 @@ if verbose >= 2 :
 resized_height, resized_width, _ = resized_image.shape
 resized_pixels = resized_height * resized_width
 if args["face_detect"] :
-    fd = cv.FaceDetectorYN_create(fd_model, "", (resized_width, resized_height), SCORE_THRESHOLD)
+    fd = cv.FaceDetectorYN_create(fd_model, "", (resized_width, resized_height))
+    fd.setScoreThreshold(SCORE_THRESHOLD)
+    fd.setTopK(TOP_K)
     _, faces = fd.detect(resized_image)
 else :
     faces = None

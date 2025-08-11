@@ -5,7 +5,7 @@ EvalFocus.lrdevplugin
 ]]
 
 -- split string from evalfocus.py
-function keyValueSplit(s, delim)
+function KeyValueSplit(s, delim)
 	local result = {}
 	for match in (s..delim):gmatch("(.-)"..delim) do
 		local key, value = match:match("([^=]+)=([^=]+)")
@@ -80,7 +80,7 @@ LrTasks.startAsyncTask( function ()
 			local stdin = io.popen(CommandLine, 'r')
 			local eval_string = stdin:read('*a')
 			stdin:close()
-			local eval_table = keyValueSplit(eval_string, ',')
+			local eval_table = KeyValueSplit(eval_string, ',')
 			local result_value = tonumber(eval_table['value']) or NOTFOUND
 			local face_count = tonumber(eval_table['face_count']) or 0
 --			Logger:info('value=' .. result_value)

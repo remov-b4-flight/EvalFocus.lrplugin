@@ -1,4 +1,5 @@
 #!/opt/homebrew/bin/python3
+""" Evaluate focus by OpenCV functions. """
 # @file evalfocus.py
 # @brief Evaluate focus by OpenCV functions.
 # @author remov_b4_flight
@@ -47,8 +48,10 @@ ERROR_CANTOPEN = 2
 # Vlog constants
 IMPOSE_OFFSET = 16
 PLOT_DPI = 80
+
 # FaceDetectorYN result index
 class FACE :
+    """ FaceDetectorYN result index """
     X = 0
     Y = 1
     WIDTH = 2
@@ -67,6 +70,7 @@ class FACE :
 
 # Color constants for visual log
 class COLOR :
+    """ Color constants for visual log """
     RED = (0, 0, 255)
     BLUE = (255, 0, 0)
     GREEN = (0, 255, 0)
@@ -77,6 +81,7 @@ class COLOR :
     MID_YELLOW = (0, 192, 192)
 
 class NORMALIZE :
+    """ Normalization modes for image processing """
     FORCE_ON = 1
     FORCE_OFF = 0
     BY_IMAGE = 2
@@ -124,6 +129,7 @@ def get_canny_edges(image, sigma) :
 
 # Metering image power using foulier transform.
 def get_foulier_power(image) :
+    """ Metering image power using foulier transform. """
     f = np.fft.fft2(image)
     fshift = np.fft.fftshift(f)
     mag = 20 * np.log(np.abs(fshift))
@@ -161,11 +167,11 @@ filter_kernel = args["k"]
 filter_ddepth = cv.CV_32F if (args["d"] == 32) else cv.CV_8U
 if "normalize" in args :
     if args["normalize"] is True :
-        normalization = NORMALIZE.FORCE_ON
+        NORMALIZATION = NORMALIZE.FORCE_ON
     else :
-        normalization = NORMALIZE.FORCE_OFF
+        NORMALIZATION = NORMALIZE.FORCE_OFF
 else :
-    normalization = NORMALIZE.BY_IMAGE
+    NORMALIZATION = NORMALIZE.BY_IMAGE
 
 start_point = time.perf_counter()
 
@@ -251,7 +257,7 @@ for img_it in faces :
     face_width = int(img_it[FACE.WIDTH])
     face_height = int(img_it[FACE.HEIGHT])
     if verbose >= 2 :
-        print("width={0}, height={1}".format(face_width, face_height), end = ", ")
+        print(f"width={face_width}, height={face_height}", end = ", ")
 
     # If face size is too small, skip it.
     face_pixels = face_width * face_height
@@ -265,19 +271,19 @@ for img_it in faces :
     face_rmouth_x = int(img_it[FACE.RMOUTH_X])
     face_lmouth_x = int(img_it[FACE.LMOUTH_X])
     if (face_count >= 1 and verbose >= 3) :
-        print("mouth=({0},{1})".format(face_rmouth_x, face_lmouth_x), end = ", ")
+        print(f"mouth=({face_rmouth_x},{face_lmouth_x})", end = ", ")
 
     # Get eye detecting result
     face_leye_x = int(img_it[FACE.LEYE_X])
     face_reye_x = int(img_it[FACE.REYE_X])
     if (face_count >= 1 and verbose >= 3) :
-        print("eye=({0},{1})".format(face_reye_x, face_leye_x), end = ", ")
+        print(f"eye=({face_reye_x},{face_leye_x})", end = ", ")
 
     # Get nose detecting result
     face_nose_x = int(img_it[FACE.NOSE_X])
     face_nose_y = int(img_it[FACE.NOSE_Y])
     if (face_count >= 1 and verbose >= 3) :
-        print("nose=({0},{1})".format(face_nose_x, face_nose_y), end = ", ")
+        print(f"nose=({face_nose_x},{face_nose_y})", end = ", ")
 
     # Get face detecting result
     face_score = round(img_it[FACE.SCORE], 2) if face_count >= 1 else 0.0
@@ -288,14 +294,14 @@ for img_it in faces :
     img_y2 = img_y1 + int(img_it[FACE.HEIGHT])
     crop_image = resized_image[img_y1 : img_y2, img_x1 : img_x2]
     if verbose >= 5 :
-        print ("image x1={0},x2={1},y1={2},y2={3}".format(img_x1, img_x2, img_y1, img_y2))
+        print (f"image x1={img_x1},x2={img_x2},y1={img_y1},y2={img_y2}")
 
     std_dev = round(np.std(crop_image), 2)
     if verbose >= 2 :
-        print("stddev={0}".format(std_dev), end=", ")
+        print(f"stddev={std_dev}", end=", ")
 
-    if (normalization == NORMALIZE.FORCE_ON or
-        normalization == NORMALIZE.BY_IMAGE and face_count == 0 or std_dev < NORMALIZE_THRESHOLD) :
+    if (NORMALIZATION == NORMALIZE.FORCE_ON or
+        NORMALIZATION == NORMALIZE.BY_IMAGE and face_count == 0 or std_dev < NORMALIZE_THRESHOLD) :
         # Normalize image if option is set or face not found.
         if verbose >= 2 :
             print("normalize=on", end=", ")
@@ -396,18 +402,17 @@ else :
     # Make slope for image(face) has low score.
     max_power *= ((max_score + POWER_SLOPE) ** 2) if (max_score < POWER_CLIFF) else max_score
 
-    if (verbose >= 3) :
-        print("max width={0}, height={1}".format(max_width, max_height))
+    if verbose >= 3 :
+        print(f"max width={max_width}, height={max_height}")
     # if face count is 0, use half of image size as ROI.
-    if (face_count == 0) :
+    if face_count == 0 :
         max_width /= 2
         max_height /= 2
 
     pixel_count = int(max_width * max_height / PIXEL10K)
 
     # Rounds up for too small face.
-    if pixel_count < 1 :
-        pixel_count = 1
+    pixel_count = max(pixel_count, 1)
     # Make result.
     power_kpixel = max_power / pixel_count
     result = round(power_kpixel)
@@ -420,13 +425,13 @@ else :
 if verbose >= 1 :
     print("result=", result)
 else :
-    print("value={0},face_count={1}".format(result, face_count))
+    print(f"value={result},face_count={face_count}")
 
 end_point = time.perf_counter()
 if verbose >= 4 :
-    print("until resize time : {:.3f} sec.".format(after_resize - start_point))
-    print("until fd time: {:.3f} sec.".format(after_fd - start_point))
-    print("total time: {:.3f} sec.".format(end_point - start_point))
+    print(f"until resize time : {after_resize - start_point:.3f} sec.")
+    print(f"until fd time: {after_fd - start_point:.3f} sec.")
+    print(f"total time: {end_point - start_point:.3f} sec.")
 
 # Make 'visual log' by option.
 if args["vlog"] :
@@ -449,7 +454,7 @@ if args["vlog"] :
         max_lmouth_y = int(max_face[FACE.LMOUTH_Y])
 
         cv.rectangle(resized_image, box, COLOR.BLUE, vlog_line)
-        cv.putText(resized_image, str(face_score), (max_x, (max_y - 8)), 
+        cv.putText(resized_image, str(face_score), (max_x, (max_y - 8)),
                     cv.FONT_HERSHEY_DUPLEX, 0.8, COLOR.CYAN, 2)
         cv.circle(resized_image, [max_rmouth_x, max_rmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
         cv.circle(resized_image, [max_lmouth_x, max_lmouth_y], 5, COLOR.MAGENTA, -1, cv.LINE_AA)
@@ -461,9 +466,9 @@ if args["vlog"] :
                    5, COLOR.GREEN, -1, cv.LINE_AA)
     # End if (face_count >= 1)
     # Draw total result
-    cv.putText(resized_image, ("Result=" + str(result)), (32, 64), 
+    cv.putText(resized_image, ("Result=" + str(result)), (32, 64),
                     cv.FONT_HERSHEY_SIMPLEX, 2.0, COLOR.RED, 6)
-    cv.putText(resized_image, ("StdDev=" + str(std_dev)), (32, 100), 
+    cv.putText(resized_image, ("StdDev=" + str(std_dev)), (32, 100),
                     cv.FONT_HERSHEY_SIMPLEX, 1.0, COLOR.MID_YELLOW, 2)
 
     # Overlay edge image on left bottom of image.
@@ -480,7 +485,7 @@ if args["vlog"] :
     (roi_x1, roi_y1) = (IMPOSE_OFFSET, resized_height - IMPOSE_OFFSET - edge_height)
     (roi_x2, roi_y2) = (roi_x1 + edge_width, roi_y1 + edge_height)
     cv.rectangle(resized_image, (roi_x1, roi_y1),(roi_x2, roi_y2),
-                  (COLOR.GREEN if (face_count ==0) else COLOR.BLUE), vlog_line)
+                  (COLOR.GREEN if (face_count == 0) else COLOR.BLUE), vlog_line)
     resized_image[roi_y1 : roi_y2, roi_x1 : roi_x2] = edge_image
 
     # Overlay histogram image

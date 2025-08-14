@@ -90,7 +90,7 @@ LrTasks.startAsyncTask( function ()
 --			Logger:info('value=' .. result_value)
 --			Logger:info('face_count=' .. face_count)
 			if (result_value >= MINRESULT) then 
-				CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
+				CurrentCatalog:withWriteAccessDo(prefs.Title, function()
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', result_value)
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'face_count', face_count)
 					if (prefs.AutoReject == true and result_value < prefs.RejectRange) then

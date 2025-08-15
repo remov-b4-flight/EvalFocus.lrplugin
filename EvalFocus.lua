@@ -64,9 +64,9 @@ LrTasks.startAsyncTask( function ()
 	local ProgressBar = LrProgress(
 		{title = prefs.Title .. ' is running..'}
 	)
-	local TargetPhoto = CurrentCatalog:getTargetPhoto()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
 	local countPhotos = #SelectedPhotos
+	LrSelection.selectNone()
 	--loops photos in selected
 	for i,PhotoIt in ipairs(SelectedPhotos) do
 		-- check if the user has canceled the operation
@@ -90,12 +90,14 @@ LrTasks.startAsyncTask( function ()
 --			Logger:info('value=' .. result_value)
 --			Logger:info('face_count=' .. face_count)
 			if (result_value >= MINRESULT) then 
-				CurrentCatalog:withWriteAccessDo(prefs.Title, function()
+				CurrentCatalog:withPrivateWriteAccessDo( function()
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', result_value)
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'face_count', face_count)
 					if (prefs.AutoReject == true and result_value < prefs.RejectRange) then
-						PhotoIt:setRawMetadata('pickStatus', -1)
-						PhotoIt:setRawMetadata('colorNameForLabel','blue')
+						CurrentCatalog:withWriteAccessDo( prefs.Title, function()
+							PhotoIt:setRawMetadata('pickStatus', -1)
+							PhotoIt:setRawMetadata('colorNameForLabel','blue')
+						end, { timeout = 0.33 } ) --end of withWriteAccessDo
 					end
 				end, { timeout = 0.33 } ) --end of withWriteAccessDo 					
 			end

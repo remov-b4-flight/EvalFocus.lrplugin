@@ -22,7 +22,7 @@ local LrApplication = import 'LrApplication'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
 local LrSelection = import 'LrSelection'
-local LrFileUtils = import 'LrFileUtils'
+--local LrFileUtils = import 'LrFileUtils'
 local prefs = import 'LrPrefs'.prefsForPlugin()
 
 if (prefs.AutoReject == nil) then
@@ -45,13 +45,13 @@ local SCRIPT = '/evalfocus.py'
 local SCRIPT_PATH = _PLUGIN.path .. SCRIPT
 local OPTION = " "
 local MINRESULT = 5
-local NOTFOUND = 2
---For python logfile
-local REDIR = '>>'
-local LOG_OPTION = '-vvvv'
-local LOG_FILE = '/' .. prefs.Title .. '.log'
-local LOGPATH = _PLUGIN.path .. LOG_FILE
-local LOG_CMDLINE = LOG_OPTION .. SEP .. REDIR .. SEP .. LOGPATH
+--local NOTFOUND = 2
+-- For python logfile
+--local REDIR = '>>'
+--local LOG_OPTION = '-vvvv'
+--local LOG_FILE = '/' .. prefs.Title .. '.log'
+--local LOGPATH = _PLUGIN.path .. LOG_FILE
+--local LOG_CMDLINE = LOG_OPTION .. SEP .. REDIR .. SEP .. LOGPATH
 
 local CurrentCatalog = LrApplication.activeCatalog()
 
@@ -66,7 +66,9 @@ LrTasks.startAsyncTask( function ()
 	)
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
 	local countPhotos = #SelectedPhotos
-	LrSelection.selectNone()
+	if (countPhotos > 1) then
+		LrSelection.selectNone()
+	end
 	--loops photos in selected
 	for i,PhotoIt in ipairs(SelectedPhotos) do
 		-- check if the user has canceled the operation
@@ -85,7 +87,7 @@ LrTasks.startAsyncTask( function ()
 			local eval_string = stdin:read('*a')
 			stdin:close()
 			local eval_table = KeyValueSplit(eval_string, ',')
-			local result_value = tonumber(eval_table['value']) or NOTFOUND
+			local result_value = tonumber(eval_table['value']) or 0
 			local face_count = tonumber(eval_table['face_count']) or 0
 --			Logger:info('value=' .. result_value)
 --			Logger:info('face_count=' .. face_count)

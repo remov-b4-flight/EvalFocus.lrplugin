@@ -45,6 +45,7 @@ local SCRIPT = '/evalfocus.py'
 local SCRIPT_PATH = _PLUGIN.path .. SCRIPT
 local OPTION = " "
 local MINRESULT = 5
+local TIMEOUT = 0.5
 --local NOTFOUND = 2
 -- For python logfile
 --local REDIR = '>>'
@@ -95,13 +96,13 @@ LrTasks.startAsyncTask( function ()
 				CurrentCatalog:withPrivateWriteAccessDo( function()
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', result_value)
 					PhotoIt:setPropertyForPlugin(_PLUGIN, 'face_count', face_count)
-					if (prefs.AutoReject == true and result_value < prefs.RejectRange) then
-						CurrentCatalog:withWriteAccessDo( prefs.Title, function()
-							PhotoIt:setRawMetadata('pickStatus', -1)
-							PhotoIt:setRawMetadata('colorNameForLabel','blue')
-						end, { timeout = 0.33 } ) --end of withWriteAccessDo
-					end
-				end, { timeout = 0.33 } ) --end of withWriteAccessDo 					
+				end, { timeout = TIMEOUT } ) --end of withPrivateWriteAccessDo
+				if (prefs.AutoReject == true and result_value < prefs.RejectRange) then
+					CurrentCatalog:withWriteAccessDo( prefs.Title, function()
+						PhotoIt:setRawMetadata('pickStatus', -1)
+						PhotoIt:setRawMetadata('colorNameForLabel','blue')
+					end, { timeout = TIMEOUT } ) --end of withWriteAccessDo
+				end
 			end
 		else
 --			Logger:info('skip non JPEG file.')

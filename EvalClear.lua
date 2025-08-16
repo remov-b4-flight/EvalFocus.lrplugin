@@ -8,6 +8,7 @@ local prefs = import 'LrPrefs'.prefsForPlugin()
 local LrApplication = import 'LrApplication'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
+local TIMEOUT = 0.5
 
 local CurrentCatalog = LrApplication.activeCatalog()
 
@@ -20,13 +21,13 @@ LrTasks.startAsyncTask( function ()
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
 	local countPhotos = #SelectedPhotos
 	--loops photos in selected
-	CurrentCatalog:withWriteAccessDo('Evaluate Focus', function()
+	CurrentCatalog:withPrivateWriteAccessDo( function()
 		for i,PhotoIt in ipairs(SelectedPhotos) do
 				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', nil)
 				PhotoIt:setPropertyForPlugin(_PLUGIN, 'face_count', nil)
 			ProgressBar:setPortionComplete(i, countPhotos)
 		end --end of for photos loop
 		ProgressBar:done()
-	end, { timeout = 0.1 }) --end of withWriteAccessDo
+	end, { timeout = TIMEOUT, asynchronous = true }) --end of withWriteAccessDo
 end ) --end of startAsyncTask function()
 return

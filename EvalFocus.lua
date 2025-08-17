@@ -92,17 +92,15 @@ LrTasks.startAsyncTask( function ()
 			local face_count = tonumber(eval_table['face_count']) or 0
 --			Logger:info('value=' .. result_value)
 --			Logger:info('face_count=' .. face_count)
-			if (result_value >= MINRESULT) then 
-				CurrentCatalog:withPrivateWriteAccessDo( function()
-					PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', result_value)
-					PhotoIt:setPropertyForPlugin(_PLUGIN, 'face_count', face_count)
-				end, { timeout = TIMEOUT } ) --end of withPrivateWriteAccessDo
-				if (prefs.AutoReject == true and result_value < prefs.RejectRange) then
-					CurrentCatalog:withWriteAccessDo( prefs.Title, function()
-						PhotoIt:setRawMetadata('pickStatus', -1)
-						PhotoIt:setRawMetadata('colorNameForLabel','blue')
-					end, { timeout = TIMEOUT } ) --end of withWriteAccessDo
-				end
+			CurrentCatalog:withPrivateWriteAccessDo( function()
+				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', result_value)
+				PhotoIt:setPropertyForPlugin(_PLUGIN, 'face_count', face_count)
+			end, { timeout = TIMEOUT } ) --end of withPrivateWriteAccessDo
+			if (prefs.AutoReject == true and result_value < prefs.RejectRange) then
+				CurrentCatalog:withWriteAccessDo( prefs.Title, function()
+					PhotoIt:setRawMetadata('pickStatus', -1)
+					PhotoIt:setRawMetadata('colorNameForLabel','blue')
+				end, { timeout = TIMEOUT } ) --end of withWriteAccessDo
 			end
 		else
 --			Logger:info('skip non JPEG file.')

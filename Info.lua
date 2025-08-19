@@ -22,5 +22,5 @@ return {
 		file = 'EvalClear.lua',
 		enabledWhen = 'photosAvailable',},
 	},
-	VERSION = { major = 1, minor = 3, revision = 4, build = 194, },
+	VERSION = { major = 1, minor = 3, revision = 4, build = 195, },
 }

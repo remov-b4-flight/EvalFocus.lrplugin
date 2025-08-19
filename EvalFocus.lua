@@ -82,8 +82,7 @@ LrTasks.startAsyncTask( function ()
 --			Logger:info(CommandLine)
 			local stdin = io.popen(CommandLine, 'r')
 			if(stdin == nil) then
-				ProgressBar:done()
-				return
+				break
 			end
 			local eval_string = stdin:read('*a')
 			stdin:close()

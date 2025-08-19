@@ -23,6 +23,7 @@ MAX_RESULT = 255
 # Constants for resize
 SMALL_LONGSIDE = 2000
 BIG_LONGSIDE = 4000
+INTERPOLATION = cv.INTER_LINEAR_EXACT
 # Constants for face detection
 SCORE_THRESHOLD = 0.75
 TOP_K = 25
@@ -210,7 +211,7 @@ if verbose >= 2 :
 
 if factor != 1.0 :
     resized_image = cv.resize(original_image, None, fx=factor, fy=factor,
-                    interpolation=cv.INTER_NEAREST_EXACT)
+                    interpolation=INTERPOLATION)
 else :
     resized_image = original_image.copy()
 

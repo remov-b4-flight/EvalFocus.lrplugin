@@ -1,5 +1,5 @@
 --[[
-EvalFocus.lrdevplugin
+EvalFocus.lrplugin
 @file EvalFocus.lua
 @author @remov_b4_flight
 ]]
@@ -22,7 +22,6 @@ local LrApplication = import 'LrApplication'
 local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
 local LrSelection = import 'LrSelection'
---local LrFileUtils = import 'LrFileUtils'
 local prefs = import 'LrPrefs'.prefsForPlugin()
 
 if (prefs.AutoReject == nil) then
@@ -39,14 +38,13 @@ end
 --local Logger = LrLogger(prefs.Title)
 --Logger:enable('logfile')
 
---Constants
+-- Constants
 local SEP = ' '
 local SCRIPT = '/evalfocus.py'
 local SCRIPT_PATH = _PLUGIN.path .. SCRIPT
 local OPTION = " "
-local MINRESULT = 5
 local TIMEOUT = 0.5
---local NOTFOUND = 2
+
 -- For python logfile
 --local REDIR = '>>'
 --local LOG_OPTION = '-vvvv'
@@ -60,7 +58,7 @@ if prefs.Vlog == true then
 	OPTION = " -vl" .. OPTION
 end
 
---Main part of this plugin.
+-- Main part of this plugin.
 LrTasks.startAsyncTask( function ()
 	local ProgressBar = LrProgress(
 		{title = prefs.Title .. ' is running..'}
@@ -70,7 +68,7 @@ LrTasks.startAsyncTask( function ()
 	if (countPhotos > 1) then
 		LrSelection.selectNone()
 	end
-	--loops photos in selected
+	-- loop photos in selected
 	for i,PhotoIt in ipairs(SelectedPhotos) do
 		-- check if the user has canceled the operation
 		if (ProgressBar:isCanceled()) then
@@ -103,12 +101,12 @@ LrTasks.startAsyncTask( function ()
 			end
 		else
 --			Logger:info('skip non JPEG file.')
-		end --isVideo
+		end -- isVideo
 		ProgressBar:setPortionComplete(i, countPhotos)
-	end --end of for photos loop
+	end -- end of loop for photos
 	ProgressBar:done()
 	if (#CurrentCatalog:getTargetPhotos() > 1) then
 		LrSelection.selectNone()
 	end
-end ) --end of startAsyncTask function()
+end ) -- end of startAsyncTask function()
 return

@@ -2,7 +2,7 @@
 """ Evaluate focus by OpenCV functions. """
 # @file evalfocus.py
 # @brief Evaluate focus by OpenCV functions.
-# @author remov_b4_flight
+# @author @remov_b4_flight
 
 import sys
 import os

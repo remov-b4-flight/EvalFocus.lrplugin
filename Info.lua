@@ -1,8 +1,8 @@
---[[-------------------------------------------------------
+--[[
 @file	Info.lua
 @author	@remov_b4_flight
 @brief	all the metadata for the plugin
----------------------------------------------------------]]
+]]
 
 return {
 
@@ -22,5 +22,5 @@ return {
 		file = 'EvalClear.lua',
 		enabledWhen = 'photosAvailable',},
 	},
-	VERSION = { major = 1, minor = 3, revision = 4, build = 195, },
+	VERSION = { major = 1, minor = 3, revision = 4, build = 196, },
 }

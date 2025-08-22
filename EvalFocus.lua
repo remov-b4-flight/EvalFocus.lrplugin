@@ -79,7 +79,7 @@ LrTasks.startAsyncTask( function ()
 			local CommandLine = python .. SEP .. SCRIPT_PATH .. SEP .. OPTION .. SEP .. FilePath
 --			Logger:info(CommandLine)
 			local stdin = io.popen(CommandLine, 'r')
-			if(stdin == nil) then
+			if (stdin == nil) then
 				break
 			end
 			local eval_string = stdin:read('*a')

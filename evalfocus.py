@@ -15,7 +15,7 @@ import numpy as np
 PIXEL10K = 10000
 # Normalize image if stddev < this value.
 NORMALIZE_THRESHOLD = 50.0
-# Ignore smaller face than this factor by entire of image.
+# Ignore smaller faces than this factor by entire of image.
 IGNORE_FACE_FACTOR = 0.075 / 100 # 0.075%
 # Constants for result range
 MIN_RESULT = 5
@@ -47,7 +47,7 @@ FOULIER_MASK = 8
 SIGMA = 0.33
 # Error code for OS
 ERROR_CANTOPEN = 2
-# Vlog constants
+# Visual log constants
 IMPOSE_OFFSET = 16
 PLOT_DPI = 80
 

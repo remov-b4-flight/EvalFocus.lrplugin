@@ -27,8 +27,8 @@ LrTasks.startAsyncTask( function ()
 				PhotoIt:setPropertyForPlugin(_PLUGIN, 'value', nil)
 				PhotoIt:setPropertyForPlugin(_PLUGIN, 'face_count', nil)
 			ProgressBar:setPortionComplete(i, countPhotos)
-		end --end of for photos loop
+		end -- end of for photos loop
 		ProgressBar:done()
 	end, { timeout = TIMEOUT, asynchronous = true }) --end of withPrivateWriteAccessDo
-end ) --end of startAsyncTask function()
+end ) -- end of startAsyncTask function()
 return

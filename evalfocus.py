@@ -199,6 +199,7 @@ if original_image is None :
     print(image_path, " CAN'T READ.")
     sys.exit(ERROR_CANTOPEN)
 
+after_imread = time.perf_counter()
 if verbose >= 2 :
     print("original size=",original_image.shape)
 
@@ -421,9 +422,9 @@ else :
     power_kpixel = max_power / pixel_count
     result = round(power_kpixel)
     if verbose >= 2 :
-        print("10Kpixels=", pixel_count)
+        print("10K pixels=", pixel_count)
         print("max power=", max_power)
-        print("power/10Kpixels=", power_kpixel)
+        print("power/10K pixels=", power_kpixel)
 
 # Output result to stdout.
 if verbose >= 1 :
@@ -433,6 +434,7 @@ else :
 
 end_point = time.perf_counter()
 if verbose >= 4 :
+    print(f"until image read time : {after_imread - start_point:.3f} sec.")
     print(f"until resize time : {after_resize - start_point:.3f} sec.")
     print(f"until fd time: {after_fd - start_point:.3f} sec.")
     print(f"total time: {end_point - start_point:.3f} sec.")

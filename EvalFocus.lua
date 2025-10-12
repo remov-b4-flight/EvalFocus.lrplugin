@@ -15,8 +15,8 @@ function KeyValueSplit(s, delim)
 	end
 	return result
 end
--- Please specfy python in your local enviromnent.
-local python = '/opt/homebrew/bin/python3'
+-- Please specify python in your local environment.
+local python = '/opt/homebrew/bin/python3.13'
 
 local LrApplication = import 'LrApplication'
 local LrTasks = import 'LrTasks'

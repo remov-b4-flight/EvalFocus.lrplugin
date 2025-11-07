@@ -50,6 +50,7 @@ ERROR_CANTOPEN = 2
 # Visual log constants
 IMPOSE_OFFSET = 16
 PLOT_DPI = 80
+VLOG_SUB_DIR = "vlog"
 
 # FaceDetectorYN result index
 class FACE :
@@ -95,7 +96,7 @@ def ceil_y_limit(y) :
     return (int(y / p) + 1) * p
 
 # Make visual log folder to home folder.
-def make_vlog_dir(sub_dir="vlog") :
+def make_vlog_dir(sub_dir=VLOG_SUB_DIR) :
     """ Make visual log directory in home folder. """
     homedir = os.environ['HOME']
     vlog_dir = os.path.join(homedir, sub_dir)
@@ -450,7 +451,6 @@ if args["vlog"] :
     vlog_line = max(vlog_line, 3)
 
     if face_count >= 1 :
-
         box = list(map(int, max_face[:4]))
         max_x = int(max_face[FACE.X])
         max_y = int(max_face[FACE.Y])

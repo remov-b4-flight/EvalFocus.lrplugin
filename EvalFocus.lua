@@ -23,6 +23,7 @@ local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
 local LrSelection = import 'LrSelection'
 local prefs = import 'LrPrefs'.prefsForPlugin()
+local Info = import 'LrInfo'
 
 if (prefs.AutoReject == nil) then
 	prefs.AutoReject = false
@@ -61,7 +62,7 @@ end
 -- Main part of this plugin.
 LrTasks.startAsyncTask( function ()
 	local ProgressBar = LrProgress(
-		{title = prefs.Title .. ' is running..'}
+		{title = Info.LrPluginName .. ' is running..'}
 	)
 	local SelectedPhotos = CurrentCatalog:getTargetPhotos()
 	local countPhotos = #SelectedPhotos

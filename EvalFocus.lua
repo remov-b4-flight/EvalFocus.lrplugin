@@ -1,5 +1,5 @@
 --[[
-EvalFocus.lrplugin
+@brief EvalFocus.lrplugin
 @file EvalFocus.lua
 @author @remov_b4_flight
 ]]
@@ -23,7 +23,7 @@ local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
 local LrSelection = import 'LrSelection'
 local prefs = import 'LrPrefs'.prefsForPlugin()
-local Info = import 'LrInfo'
+local Info = require 'LrInfo'
 
 if (prefs.AutoReject == nil) then
 	prefs.AutoReject = false
@@ -36,7 +36,7 @@ if (prefs.Vlog == nil) then
 end
 
 --local LrLogger = import 'LrLogger'
---local Logger = LrLogger(prefs.Title)
+--local Logger = LrLogger(Info.LrPluginName)
 --Logger:enable('logfile')
 
 -- Constants
@@ -49,7 +49,7 @@ local TIMEOUT = 0.5
 -- For python logfile
 --local REDIR = '>>'
 --local LOG_OPTION = '-vvvv'
---local LOG_FILE = '/' .. prefs.Title .. '.log'
+--local LOG_FILE = '/' .. Info.LrPluginName .. '.log'
 --local LOGPATH = _PLUGIN.path .. LOG_FILE
 --local LOG_CMDLINE = LOG_OPTION .. SEP .. REDIR .. SEP .. LOGPATH
 
@@ -98,7 +98,7 @@ LrTasks.startAsyncTask( function ()
 				CurrentCatalog:withWriteAccessDo( prefs.Title, function()
 					PhotoIt:setRawMetadata('pickStatus', -1)
 					PhotoIt:setRawMetadata('colorNameForLabel','blue')
-				end, { timeout = TIMEOUT } ) --end of withWriteAccessDo
+				end, { timeout = TIMEOUT } ) -- end of withWriteAccessDo
 			end
 		else
 --			Logger:info('skip non JPEG file.')

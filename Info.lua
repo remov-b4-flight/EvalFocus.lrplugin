@@ -6,7 +6,7 @@
 
 return {
 
-	LrSdkVersion = 4.0,
+	LrSdkVersion = 6.0,
 
 	LrToolkitIdentifier = 'cx.ath.remov-b4-flight.evalfocus',
 	LrPluginName = 'EvalFocus',
@@ -22,5 +22,5 @@ return {
 		file = 'EvalClear.lua',
 		enabledWhen = 'photosAvailable',},
 	},
-	VERSION = { major = 1, minor = 4, revision = 0, build = 206, },
+	VERSION = { major = 1, minor = 4, revision = 0, build = 207, },
 }

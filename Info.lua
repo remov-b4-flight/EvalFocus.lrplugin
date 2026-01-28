@@ -10,7 +10,7 @@ return {
 
 	LrToolkitIdentifier = 'cx.ath.remov-b4-flight.evalfocus',
 	LrPluginName = 'EvalFocus',
-	LrPluginInfoUrl='https://x.com/remov_b4_flight',
+	LrPluginInfoUrl='https://github.com/remov-b4-flight/EvalFocus.lrplugin',
 	LrMetadataProvider = 'MetadataDefinition.lua',
 	LrPluginInfoProvider = 'PluginInfo.lua',
 	LrInitPlugin = 'PluginInit.lua',
@@ -22,5 +22,5 @@ return {
 		file = 'EvalClear.lua',
 		enabledWhen = 'photosAvailable',},
 	},
-	VERSION = { major = 1, minor = 4, revision = 0, build = 207, },
+	VERSION = { major = 1, minor = 4, revision = 0, build = 208, },
 }

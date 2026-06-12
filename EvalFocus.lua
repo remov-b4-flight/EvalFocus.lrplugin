@@ -23,7 +23,7 @@ local LrTasks = import 'LrTasks'
 local LrProgress = import 'LrProgressScope'
 local LrSelection = import 'LrSelection'
 local prefs = import 'LrPrefs'.prefsForPlugin()
-local Info = require 'LrInfo'
+local Info = require 'Info.lua'
 
 if (prefs.AutoReject == nil) then
 	prefs.AutoReject = false
